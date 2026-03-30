@@ -4,7 +4,6 @@ const cors = require('cors')
 const axios = require('axios')
 const multer = require('multer')
 const FormData = require('form-data')
-const cors = require('cors');
 
 const app = express()
 const upload = multer({ storage: multer.memoryStorage() })
@@ -14,7 +13,7 @@ const multiUpload = upload.fields([
   { name: 'galleryImages', maxCount: 30 }
 ])
 
-const PORT = 3005
+const PORT = process.env.PORT || 3005;
 
 app.use(cors({
   origin: [
