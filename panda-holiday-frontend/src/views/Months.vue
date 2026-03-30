@@ -255,9 +255,9 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-const api = axios.create({
-  baseURL: 'import.meta.env.VITE_API_URL + '/api'',
-  timeout: 30000
+const secureApi = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  timeout: 120000
 })
 
 const showToast = (message, type = 'success') => {

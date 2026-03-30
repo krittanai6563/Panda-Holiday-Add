@@ -373,11 +373,18 @@ const route = useRoute()
 const router = useRouter()
 const tourId = route.params.id
 
-const secureApi = axios.create({ 
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1', 
-  timeout: 120000 
+// 1. API สำหรับดึงข้อมูลมาแสดงผล (วิ่งไปหา WordPress)
+const publicApi = axios.create({
+  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1',
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 30000
 })
 
+// 2. API สำหรับอัปโหลดรูปและอัปเดตข้อมูล (วิ่งไปหา Node.js บน Render)
+const secureApi = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  timeout: 120000
+})
 // ---------------------------------------------------------------------
 // DEFAULT FORM
 // ---------------------------------------------------------------------
@@ -515,7 +522,7 @@ const fetchMasterData = async () => {
   loadingAirlines.value = true; loadingDestinations.value = true; loadingFestivals.value = true; loadingMonths.value = true; loadingPricingCategories.value = true;
   try {
     const [airRes, destRes, festRes, monthRes, priceCatRes] = await Promise.all([
-      secureApi.get('/airlines'), secureApi.get('/taxonomy-terms/travel_locations'),
+     publicApi.get('/airlines'), publicApi.get('/taxonomy-terms/travel_locations'),
       secureApi.get('/taxonomy-terms/festival'), secureApi.get('/taxonomy-terms/month'),
       secureApi.get('/taxonomy-terms/itinerary_pricing_category')
     ])
@@ -532,7 +539,7 @@ const fetchMasterData = async () => {
 const fetchTourDetail = async () => {
   isFetching.value = true; errorMessage.value = ''
   try {
-    const response = await secureApi.get(`/tours/${tourId}`) 
+   const response = await publicApi.get(`/tours/${tourId}`) 
     if (response.data && response.data.success) {
       const tour = response.data.data
       

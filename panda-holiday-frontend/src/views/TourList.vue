@@ -789,10 +789,9 @@ const publicApi = axios.create({
 })
 
 const secureApi = axios.create({
-  baseURL: 'import.meta.env.VITE_API_URL + '/api'',
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
   timeout: 120000
 })
-
 // 🟢 1. ฟังก์ชันคัดลอกรอบเดินทาง (ดึงมาแค่ราคา ไม่ดึงวันที่)
 // 🟢 ฟังก์ชันคัดลอกรอบเดินทาง (แบบระบุจำนวนได้)
 const duplicatePricingRound = (index) => {
