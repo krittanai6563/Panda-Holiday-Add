@@ -789,7 +789,7 @@ const publicApi = axios.create({
 })
 
 const secureApi = axios.create({
-  baseURL: 'http://localhost:3005/api',
+  baseURL: 'import.meta.env.VITE_API_URL + '/api'',
   timeout: 120000
 })
 

@@ -4,6 +4,7 @@ const cors = require('cors')
 const axios = require('axios')
 const multer = require('multer')
 const FormData = require('form-data')
+const cors = require('cors');
 
 const app = express()
 const upload = multer({ storage: multer.memoryStorage() })
@@ -16,9 +17,13 @@ const multiUpload = upload.fields([
 const PORT = 3005
 
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: [
+    'http://localhost:5173', // อนุญาตให้คุณรันทดสอบในเครื่องตัวเองได้
+    'https://panda-holiday-add.vercel.app' // อนุญาตโดเมนของ Vercel (ใส่ของคุณให้เป๊ะๆ ห้ามมี / ต่อท้าย)
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // อนุญาต Method เหล่านี้
   credentials: true
-}))
+}));
 
 app.use(express.json({ limit: '10mb' }))
 
