@@ -65,16 +65,6 @@
           </router-link>
         </li>
 
-        <li>
-          <router-link to="/articles" class="nav-link" @click="closeMobileMenu">
-            <span class="menu-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.125 3C3.089 3 2.25 3.84 2.25 4.875V18a3 3 0 003 3h15a3 3 0 01-3-3V4.875C17.25 3.839 16.41 3 15.375 3H4.125zM12 9.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H12zm-.75-2.25a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5H12a.75.75 0 01-.75-.75zM6 12.75a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5H6zm0 3a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5H6z" clip-rule="evenodd" />
-              </svg>
-            </span>
-            <span class="menu-text">จัดการบทความ</span>
-          </router-link>
-        </li>
         
 
         <li class="menu-label mt-4">DATA MANAGEMENT</li>

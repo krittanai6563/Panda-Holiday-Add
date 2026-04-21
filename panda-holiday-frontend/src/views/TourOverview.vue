@@ -57,13 +57,13 @@
       <div v-for="tour in filteredTours" :key="tour.id" class="tour-card shadow-sm">
         
         <div class="card-image">
-          <img :src="tour.featured_image_url || 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" alt="Tour Image" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
+          <img class="tour-card-image" :src="tour.featured_image_url || 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" alt="Tour Image" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
           <div class="badge-price">
             <small>เริ่มต้น</small> <br> {{ tour.trip_price_display ? Number(tour.trip_price_display.replace(/,/g, '')).toLocaleString('th-TH') : 'N/A' }} ฿
           </div>
-          <div class="badge-status" :class="tour.status">
+          <!-- <div class="badge-status" :class="tour.status">
             {{ tour.status === 'publish' ? 'ออนไลน์' : 'ฉบับร่าง' }}
-          </div>
+          </div> -->
         </div>
 
         <div class="card-content">
@@ -88,16 +88,16 @@
         </div>
 
         <div class="card-actions">
-          <select 
-            v-model="tour.status" 
-            @change="updateTourStatus(tour.id, tour.status)"
-            class="btn-sm status-dropdown"
-            :class="tour.status === 'publish' ? 'status-publish' : 'status-draft'"
-            :disabled="tour.isUpdating"
-          >
-            <option value="publish">✅ ออนไลน์</option>
-            <option value="draft">📝 ซ่อนไว้ (ฉบับร่าง)</option>
-          </select>
+         <select 
+  :value="tour.status" 
+  @change="promptStatusChange(tour, $event)"
+  class="btn-sm status-dropdown"
+  :class="tour.status === 'publish' ? 'status-publish' : 'status-draft'"
+  :disabled="tour.isUpdating"
+>
+  <option value="publish">✅ ออนไลน์</option>
+  <option value="draft">📝 ซ่อนไว้ (ฉบับร่าง)</option>
+</select>
 
           <div class="action-right">
             <router-link :to="`/tour/${tour.id}`" class="btn btn-icon btn-edit" title="แก้ไขโปรแกรมนี้">
@@ -145,6 +145,43 @@
       </div>
     </transition>
 
+   <transition name="fade">
+      <div v-if="showStatusModal" class="custom-modal-overlay" @click.self="cancelStatusChange">
+        <div class="custom-modal-box status-modal-box shadow-lg text-center">
+          
+          <div class="warning-icon-large" style="background: #eff6ff; color: #3b82f6; box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);">
+            <span style="font-size: 2rem;">❓</span>
+          </div>
+          
+          <h3 class="modal-title mt-3">ยืนยันการเปลี่ยนสถานะ?</h3>
+          <p class="modal-desc mt-2">
+            คุณต้องการเปลี่ยนสถานะโปรแกรมทัวร์นี้เป็น <br>
+            <strong :style="{ color: pendingNewStatus === 'publish' ? '#16a34a' : '#d97706', fontSize: '1.1rem' }">
+              {{ pendingNewStatus === 'publish' ? '✅ ออนไลน์ (แสดงบนเว็บ)' : '📝 ฉบับร่าง (ซ่อนจากเว็บ)' }}
+            </strong> 
+            ใช่หรือไม่?
+          </p>
+          
+          <div class="modal-actions-center mt-4">
+            <button type="button" class="btn btn-outline-secondary" @click="cancelStatusChange" :disabled="isStatusUpdating">
+              ยกเลิก
+            </button>
+            <button type="button" class="btn btn-primary" @click="confirmStatusChange" :disabled="isStatusUpdating">
+              <span v-if="isStatusUpdating">⏳ กำลังบันทึก...</span>
+              <span v-else>ยืนยันการเปลี่ยนแปลง</span>
+            </button>
+          </div>
+          
+        </div>
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div v-if="toastMessage" class="alert shadow" :class="toastType === 'success' ? 'alert-success' : 'alert-danger'">
+        {{ toastMessage }}
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -166,6 +203,76 @@ const destinationsList = ref([])
 const showDeleteModal = ref(false)
 const tourIdToDelete = ref(null)
 const isDeleting = ref(false)
+
+
+// 🟢 ตัวแปรสำหรับควบคุม Modal เปลี่ยนสถานะ
+const showStatusModal = ref(false)
+const pendingStatusTour = ref(null)
+const pendingNewStatus = ref('')
+const isStatusUpdating = ref(false)
+
+// 🟢 โค้ดที่ขาดหายไป (เพิ่มส่วนนี้เข้าไปครับ)
+const toastMessage = ref('')
+const toastType = ref('success')
+
+const showToast = (msg, type = 'success') => {
+  toastMessage.value = msg
+  toastType.value = type
+  // ปิดแจ้งเตือนอัตโนมัติใน 3 วินาที
+  setTimeout(() => {
+    toastMessage.value = ''
+  }, 3000)
+}
+
+
+// 🟢 ฟังก์ชันเมื่อผู้ใช้กดเลือก Dropdown (จะยังไม่เปลี่ยนค่าจริง แต่โชว์ Modal ก่อน)
+const promptStatusChange = (tour, event) => {
+  pendingStatusTour.value = tour
+  pendingNewStatus.value = event.target.value
+  showStatusModal.value = true
+  
+  // บังคับให้ Dropdown กลับไปแสดงค่าเดิมก่อน (จนกว่าจะกดยืนยัน)
+  event.target.value = tour.status 
+}
+
+// 🟢 ฟังก์ชันเมื่อกดยกเลิก
+const cancelStatusChange = () => {
+  showStatusModal.value = false
+  pendingStatusTour.value = null
+  pendingNewStatus.value = ''
+}
+
+// 🟢 ฟังก์ชันเมื่อกดยืนยันการเปลี่ยนสถานะ
+const confirmStatusChange = async () => {
+  if (!pendingStatusTour.value) return
+  
+  const tour = pendingStatusTour.value
+  const newStatus = pendingNewStatus.value
+  
+  isStatusUpdating.value = true
+  tour.isUpdating = true
+
+  try {
+    const res = await secureApi.post(`/update-tour-status/${tour.id}`, { status: newStatus })
+    if(res.data && res.data.success) {
+      // ✅ เมื่อ API สำเร็จ ค่อยอัปเดตค่า status บนหน้าจอให้เปลี่ยนตาม
+      tour.status = newStatus
+      showToast(newStatus === 'publish' ? '✅ เปิดออนไลน์สำเร็จ!' : '📝 ซ่อนเป็นฉบับร่างสำเร็จ!', 'success')
+      cancelStatusChange() // ปิด Modal
+    } else {
+      throw new Error("Update Failed")
+    }
+  } catch (error) {
+    console.error('Error updating status:', error)
+    showToast('❌ เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนสถานะได้', 'error')
+    cancelStatusChange()
+    await fetchTours() 
+  } finally {
+    tour.isUpdating = false
+    isStatusUpdating.value = false
+  }
+}
+
 
 const openDeleteModal = (id) => {
   tourIdToDelete.value = id
@@ -189,12 +296,13 @@ const executeDelete = async () => {
     if (res.data && res.data.success) {
       tours.value = tours.value.filter(t => t.id !== tourIdToDelete.value) 
       closeDeleteModal()
+      showToast('🗑️ ลบโปรแกรมทัวร์สำเร็จ!', 'success') // <--- เพิ่มตรงนี้
     } else {
       throw new Error("Delete Failed")
     }
   } catch (error) {
     console.error(error)
-    alert('เกิดข้อผิดพลาดในการลบข้อมูล')
+    showToast('❌ เกิดข้อผิดพลาดในการลบข้อมูล', 'error') // <--- เปลี่ยนจาก alert เป็น Toast
     if (targetTour) targetTour.isUpdating = false
   } finally {
     isDeleting.value = false
@@ -220,9 +328,10 @@ const fetchMasterData = async () => {
 }
 
 const getAirlineName = (airlineKey) => {
-  if (!airlineKey) return 'ไม่ระบุ';
-  const found = airlinesList.value.find(a => a.airline_key === airlineKey);
-  return found ? found.airline_name : airlineKey;
+  if (!airlineKey || airlineKey === '') return 'ไม่ระบุ';
+  const keyStr = Array.isArray(airlineKey) ? airlineKey[0] : airlineKey;
+  const found = airlinesList.value.find(a => String(a.airline_key).trim() === String(keyStr).trim());
+  return found ? found.airline_name : keyStr;
 }
 
 const getDestinationNames = (idsArray) => {
@@ -275,19 +384,20 @@ const updateTourStatus = async (id, newStatus) => {
   try {
     const res = await secureApi.post(`/update-tour-status/${id}`, { status: newStatus })
     if(res.data && res.data.success) {
-      // Success
+      // ✅ ถ้าสำเร็จ ให้โชว์ Toast สีเขียว
+      showToast(newStatus === 'publish' ? '✅ เปิดออนไลน์สำเร็จ!' : '📝 ซ่อนเป็นฉบับร่างสำเร็จ!', 'success')
     } else {
       throw new Error("Update Failed")
     }
   } catch (error) {
     console.error('Error updating status:', error)
-    alert('เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนสถานะได้ ระบบจะดึงข้อมูลใหม่')
-    await fetchTours() 
+    // ❌ ถ้าพัง ให้โชว์ Toast สีแดง
+    showToast('❌ เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนสถานะได้', 'error')
+    await fetchTours() // ดึงข้อมูลกลับคืน
   } finally {
     if (targetTour) targetTour.isUpdating = false
   }
 }
-
 onMounted(async () => {
   await fetchMasterData()
   await fetchTours()
@@ -325,6 +435,70 @@ onMounted(async () => {
 }
 .page-title { font-size: 1.8rem; font-weight: 600; color: var(--color-secondary); margin: 0; }
 .page-subtitle { color: #64748b; margin: 5px 0 0 0; font-weight: 300;}
+
+
+/* -----------------------------------
+   🟢 TOAST NOTIFICATION STYLES
+----------------------------------- */
+.alert {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 400px;
+  font-family: var(--font-family, 'Kanit', sans-serif);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid;
+  font-size: 1rem;
+}
+
+.alert-success {
+  background-color: #ffffff;
+  color: #15803d;
+  border-color: #e2e8f0;
+  border-left-color: #16a34a;
+}
+
+.alert-danger {
+  background-color: #ffffff;
+  color: #dc2626;
+  border-color: #e2e8f0;
+  border-left-color: #dc2626;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) translateX(20px);
+}
+
+.status-modal-box {
+  width: 90%;
+  max-width: 400px;
+  padding: 30px;
+  background: white;
+  
+  /* 🟢 ส่วนที่เพิ่มเข้ามาเพื่อจัดกึ่งกลาง */
+  text-align: center; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalPop 0.3s ease-out forwards;
+}
 
 /* ---------------------------------------------------
    FILTER BAR
@@ -427,6 +601,12 @@ onMounted(async () => {
 }
 .error-text { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
 
+.tour-card-image {
+  width: 100%;             /* บังคับความกว้างให้เต็มกรอบของการ์ด */
+  aspect-ratio: 1 / 1;     /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
+  object-fit: cover;       /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
+  object-position: center; /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */
+}
 .spinner {
   width: 40px;
   height: 40px;
@@ -457,9 +637,14 @@ onMounted(async () => {
   height: 160px;
 }
 .tour-display-area.list-mode .card-image {
-  width: 240px;
+  width: 160px; /* ปรับให้พอดีกับความสูง 160px ของการ์ด เพื่อให้เป็นสี่เหลี่ยมจัตุรัส */
   height: 100%;
 }
+
+.tour-display-area.list-mode .tour-card-image {
+  height: 100%; /* บังคับให้รูปใน List Mode เต็มกรอบ 160x160 พอดี */
+}
+
 .tour-display-area.list-mode .card-content {
   display: flex;
   flex-direction: column;
@@ -492,14 +677,33 @@ onMounted(async () => {
   border-color: #cbd5e1;
 }
 
-.card-image { position: relative; height: 210px; background: #f1f5f9; border-right: 1px solid #f1f5f9;}
-.card-image img { width: 100%; height: 100%; object-fit: cover; }
+/* 1. ลบความสูง height: 210px; ทิ้งไป เพื่อให้กล่องยืดหยุ่นตามสัดส่วนภาพ */
+.card-image { 
+  position: relative; 
+  background: #f1f5f9; 
+  border-right: 1px solid #f1f5f9;
+  overflow: hidden; /* เพิ่มตัวนี้เพื่อป้องกันภาพล้นออกนอกกรอบ */
+}
+
+/* 2. จัดการรูปภาพให้เป็น 1:1 แบบไม่บังข้อความ */
+.tour-card-image { 
+  width: 100%;            
+  aspect-ratio: 1 / 1;    
+  object-fit: cover;      
+  object-position: center; 
+  display: block; /* เพิ่มตัวนี้เพื่อลบช่องว่างสีขาวใต้รูปภาพ */
+}
+
+.card-image img {  width: 100%;             /* บังคับความกว้างให้เต็มกรอบของการ์ด */
+  aspect-ratio: 1 / 1;     /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
+  object-fit: cover;       /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
+  object-position: center; /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */}
 
 .badge-price {
-  position: absolute; bottom: 15px; right: 15px;
+  position: absolute; top: 15px; left: 15px;
   background: rgba(26, 26, 26, 0.85); color: white;
   padding: 6px 12px; border-radius: 8px;
-  font-weight: 600; font-size: 1.1rem; text-align: right;
+  font-weight: 600; font-size: 1.0rem; text-align: left;
   line-height: 1.1; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);
 }
 .badge-price small { font-size: 0.75rem; font-weight: 400; opacity: 0.8; }

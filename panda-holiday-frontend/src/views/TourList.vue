@@ -379,7 +379,22 @@
         </div>
       </section>
 
-      <footer class="form-actions">
+     <div class="form-actions sticky-bottom">
+  <button type="button" @click="resetForm" class="btn btn-outline-secondary btn-lg">ล้างข้อมูล</button>
+  
+  <button type="submit" class="btn btn-lg submit-btn" 
+    :class="isFormComplete ? 'btn-primary' : 'btn-warning'" 
+    :disabled="isSubmitting">
+    
+    <span v-if="isSubmitting">⏳ {{ uploadProgressText || 'กำลังบันทึก...' }}</span>
+    <template v-else>
+      <span v-if="isFormComplete">💾 บันทึกโปรแกรมทัวร์</span>
+      <span v-else>📝 บันทึกแบบร่าง</span>
+    </template>
+  </button>
+</div>
+
+      <!-- <footer class="form-actions">
         <button type="button" @click="resetForm" class="btn btn-secondary" :disabled="isSubmitting">
           ล้างข้อมูล
         </button>
@@ -387,7 +402,7 @@
           <span v-if="isSubmitting">⏳ {{ uploadProgressText || 'กำลังบันทึก...' }}</span>
           <span v-else>💾 บันทึกโปรแกรมทัวร์</span>
         </button>
-      </footer>
+      </footer> -->
     </form>
 
     <transition name="fade">
@@ -593,6 +608,31 @@
       </div>
     </transition>
 
+    <transition name="fade">
+      <div v-if="showDuplicateModal" class="custom-modal-overlay" @click.self="closeDuplicateModal">
+        <div class="custom-modal-box">
+          <div class="modal-header">
+            <h3>📋 คัดลอกตารางราคา</h3>
+            <button type="button" class="btn-close" @click="closeDuplicateModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p>ต้องการคัดลอกราคาของ <strong>"รอบที่ {{ currentDuplicateIndex + 1 }}"</strong> เพิ่มอีกกี่รอบ?</p>
+            <div class="counter-group">
+              <button type="button" class="btn-counter" @click="duplicateCount > 1 ? duplicateCount-- : null">-</button>
+              <input type="number" v-model="duplicateCount" class="form-control text-center count-input" min="1" />
+              <button type="button" class="btn-counter" @click="duplicateCount++">+</button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" @click="closeDuplicateModal">ยกเลิก</button>
+            <button type="button" class="btn btn-primary" @click="confirmDuplicate">
+              ✅ ยืนยันคัดลอก ({{ duplicateCount }} รอบ)
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -686,49 +726,42 @@ const showDuplicateModal = ref(false)
 const duplicateCount = ref(1)
 const currentDuplicateIndex = ref(null)
 
-// 🟢 ฟังก์ชันเปิด Modal
-const openDuplicateModal = (index) => { currentDuplicateIndex.value = index; duplicateCount.value = 1; showDuplicateModal.value = true; }
-// 🟢 ฟังก์ชันปิด Modal
-const closeDuplicateModal = () => {
-  showDuplicateModal.value = false
-  currentDuplicateIndex.value = null
+const openDuplicateModal = (index) => { 
+  currentDuplicateIndex.value = index; 
+  duplicateCount.value = 1; 
+  showDuplicateModal.value = true; 
+}
+
+const closeDuplicateModal = () => { 
+  showDuplicateModal.value = false; 
+  currentDuplicateIndex.value = null; 
 }
 
 
 const confirmDuplicate = () => {
   const index = currentDuplicateIndex.value;
   const count = duplicateCount.value;
-
-  if (count < 1 || isNaN(count)) {
-    alert('กรุณาระบุจำนวนอย่างน้อย 1 รอบ');
-    return;
-  }
+  if (count < 1 || isNaN(count)) return alert('กรุณาระบุจำนวนรอบอย่างน้อย 1');
 
   const sourceRound = formData.value.trip_pricing_data[index];
-  
-  // คัดลอกราคาต้นฉบับ
-  const copiedPrices = sourceRound.prices.map(price => ({
-    category: price.category,
-    amount: price.amount
-  }));
+  const copiedPrices = sourceRound.prices.map(price => ({ category: price.category, amount: price.amount }));
 
   const newRounds = [];
   for (let i = 0; i < count; i++) {
     newRounds.push({
       _id: Date.now() + Math.random() + i,
-      start_date: sourceRound.start_date, // ก๊อปปี้วันที่ต้นฉบับมาให้ดูเป็นตัวอย่าง
-      end_date: sourceRound.end_date,
+      start_date: sourceRound.start_date, 
+      end_date: sourceRound.end_date, 
       max_pax: sourceRound.max_pax,
-      prices: JSON.parse(JSON.stringify(copiedPrices)) // Deep Copy ราคา
+      prices: JSON.parse(JSON.stringify(copiedPrices))
     });
   }
-
-  // แทรกรอบใหม่ทั้งหมดเข้าไป และรีเฟรชหน้าจอ
+  
+  // แทรกข้อมูลที่ก็อปปี้ต่อท้ายรอบที่เลือกไว้
   formData.value.trip_pricing_data.splice(index + 1, 0, ...newRounds);
   formData.value.trip_pricing_data = [...formData.value.trip_pricing_data];
   
-  // ปิด Modal
-  closeDuplicateModal();
+  closeDuplicateModal(); // ปิดหน้าต่าง
 }
 
 const generateItineraryHtml = () => {
@@ -787,9 +820,9 @@ const publicApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
-
 const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  // เปลี่ยนเป็นเรียกไฟล์ api.php แทนครับ
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ ที่ถูกต้อง
   timeout: 120000
 })
 // 🟢 1. ฟังก์ชันคัดลอกรอบเดินทาง (ดึงมาแค่ราคา ไม่ดึงวันที่)
@@ -1071,6 +1104,15 @@ const buildPayload = () => {
   const payload = JSON.parse(JSON.stringify(formData.value))
   payload.tour_schedule_details = generateItineraryHtml()
 
+
+  // 🟢 เพิ่มเงื่อนไข: ถ้าฟอร์มไม่ครบ (ปุ่มขึ้นว่าแบบร่าง) ให้บังคับสถานะเป็น draft อัตโนมัติ
+  if (!isFormComplete.value) {
+    payload.status = 'draft'
+  } else {
+    // ถ้าข้อมูลครบแล้ว ให้ยึดตามที่ผู้ใช้อาจจะตั้งค่าไว้ (หรือบังคับเป็น publish ก็ได้)
+    payload.status = formData.value.status || 'publish'
+  }
+  
   // 🟢 1. ตัด HTML ออกจาก Excerpt ให้เหลือเฉพาะข้อความล้วน
   if (payload.excerpt) {
     // ใช้สร้าง Element จำลองเพื่อดูดเฉพาะข้อความ (ป้องกัน Tag หรือ &nbsp; หลุดไป)
@@ -1499,6 +1541,31 @@ const handleCsvImport = (event) => {
 };
 
 
+// 🟢 ตรวจสอบว่ากรอกข้อมูลครบทุกช่องที่สำคัญหรือไม่
+const isFormComplete = computed(() => {
+  const fd = formData.value;
+  
+  // 1. ข้อมูลทั่วไป
+  const hasGeneral = fd.title && fd.trip_code && fd.trip_days && fd.trip_nights;
+  
+  // 2. ข้อมูลการเดินทาง (เช็กว่าเลือกจุดหมายอย่างน้อย 1 ที่)
+  const hasTravel = fd.tour_airlines && fd.destination_ids?.length > 0;
+  
+  // 3. รอบเดินทาง (ต้องมีอย่างน้อย 1 รอบ และในรอบนั้นต้องมีราคา)
+  const hasPricing = fd.trip_pricing_data?.length > 0 && 
+                     fd.trip_pricing_data.every(round => 
+                        round.start_date && round.prices?.some(p => p.amount > 0)
+                     );
+  
+  // 4. รายละเอียดเนื้อหา
+  const hasContent = fd.excerpt && fd.overview && fd.tour_highlight && itineraryRows.value.length > 0;
+  
+  // 5. ไฟล์แนบ (ถ้าหน้าเพิ่มต้องมีไฟล์ใหม่ ถ้าหน้าแก้ไขมีของเดิมหรือของใหม่ก็ได้)
+  const hasImage = featuredImageFile.value || (typeof currentFeaturedImageUrl !== 'undefined' && currentFeaturedImageUrl.value);
+  const hasPdf = pdfFile.value || (typeof currentPdfUrl !== 'undefined' && currentPdfUrl.value);
+
+  return hasGeneral && hasTravel && hasPricing && hasContent && hasImage && hasPdf;
+});
 
 
 
@@ -1773,6 +1840,18 @@ const processImportTours = async (tours) => {
   justify-content: center;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.btn-warning {
+  background-color: #f59e0b; /* สีส้มอมเหลือง */
+  color: white;
+  min-width: 250px;
+  box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #d97706;
+  transform: translateY(-1px);
 }
 
 .section-header-flex {
@@ -2401,16 +2480,26 @@ const processImportTours = async (tours) => {
 /* -----------------------------------
    🟢 11. FORM ACTIONS & ALERTS
 ----------------------------------- */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 10px;
-  padding: 20px 30px;
-  background: var(--color-white);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+/* ---------------------------------------------------
+   ส่วนจัดการปุ่มบันทึก (ล็อกติดขอบจอด้านล่าง)
+--------------------------------------------------- */
+.form-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 15px; 
+  padding: 20px 30px; 
+  background: white; 
+  border-radius: 12px; 
+  border: 1px solid var(--color-border); 
+  /* เพิ่มเงาบางๆ ด้านบน เพื่อให้ดูรู้ว่ากล่องนี้ลอยอยู่เหนือเนื้อหา */
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.05); 
+}
+
+/* 🟢 คลาสพระเอกที่ทำให้ล็อกตำแหน่ง */
+.sticky-bottom { 
+  position: sticky; 
+  bottom: 20px; /* เว้นระยะห่างจากขอบจอด้านล่าง 20px */
+  z-index: 100; /* ให้อยู่ด้านหน้าสุด ไม่โดนฟอร์มอื่นบัง */
 }
 
 .submit-btn {
@@ -2578,6 +2667,18 @@ const processImportTours = async (tours) => {
   width: 80px;
 }
 
+
+/* --- Modals for Duplicate --- */
+.custom-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.custom-modal-box { background: white; width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.modal-header { padding: 20px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; background: #f8fafc; }
+.modal-header h3 { margin: 0; font-size: 1.15rem; color: var(--color-secondary); }
+.btn-close { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8; }
+.modal-body { padding: 25px 20px; text-align: center; }
+.counter-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 10px auto; }
+.btn-counter { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #cbd5e1; background: #f1f5f9; font-size: 1.2rem; cursor: pointer; }
+.count-input { width: 80px; text-align: center; font-size: 1.2rem; border: none; border-bottom: 2px solid var(--color-primary); border-radius: 0; padding: 5px; }
+.modal-footer { padding: 15px 20px; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; }
 
 /* -----------------------------------
    🟢 IMPORT PROGRESS MODAL STYLES
