@@ -85,8 +85,6 @@
 
 // export default router
 
-
-
 import { createRouter, createWebHistory } from 'vue-router'
 
 // นำเข้าหน้าต่างๆ
@@ -98,6 +96,8 @@ import PricingCategories from '../views/PricingCategories.vue'
 import Airlines from '../views/Airlines.vue'
 import TourOverview from '../views/TourOverview.vue' 
 import TourList from '../views/TourList.vue'
+// 🟢 1. เพิ่มบรรทัดนี้ เพื่อให้ระบบรู้จัก TourDetail
+import TourDetail from '../views/TourDetail.vue' 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -111,7 +111,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: TourOverview, // คลิกหน้าแรกจะวิ่งไปที่นี่
+      component: TourOverview,
       meta: { requiresAuth: true }
     },
     {
@@ -120,11 +120,10 @@ const router = createRouter({
       component: Destinations,
       meta: { requiresAuth: true }
     },
-    // 🟢 เพิ่มส่วนนี้เพื่อให้เมนู "เพิ่มโปรแกรมทัวร์" ใช้งานได้
     {
       path: '/add-tour',
       name: 'add-tour',
-      component: TourList, // เปลี่ยนเป็นชื่อ Component ที่คุณใช้สร้างทัวร์
+      component: TourList,
       meta: { requiresAuth: true }
     },
     {
@@ -151,7 +150,13 @@ const router = createRouter({
       component: Airlines,
       meta: { requiresAuth: true }
     },
-    // ดักจับหน้าอื่นๆ ให้กลับไปหน้าแรก
+    { 
+      path: '/tour/:id', 
+      name: 'tour-detail', 
+      component: TourDetail, 
+      meta: { requiresAuth: true } 
+    },
+   
     {
       path: '/:pathMatch(.*)*',
       redirect: '/'

@@ -96,7 +96,7 @@
 
         <li class="menu-label mt-4">ACCOUNT</li>
         <li>
-          <a href="#" class="nav-link logout-link" @click.prevent="logout">
+          <a href="#" class="nav-link logout-link" @click.prevent="showLogoutModal = true">
             <span class="menu-icon-box logout-icon">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
@@ -108,156 +108,130 @@
       </ul>
     </div>
   </aside>
+
+  <transition name="modal-fade">
+    <div v-if="showLogoutModal" class="custom-modal-overlay" @click.self="showLogoutModal = false">
+      <div class="custom-modal-box logout-modal-box shadow-lg text-center">
+        <div class="warning-icon-large">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="40" height="40">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+        </div>
+        <h3 class="modal-title mt-3">ยืนยันการออกจากระบบ?</h3>
+        <p class="modal-desc">ต้องการออกจากระบบ Panda Admin หรือไม่?</p>
+        
+        <div class="modal-actions-center mt-4">
+          <button type="button" class="btn btn-outline-secondary" @click="showLogoutModal = false">
+            ยกเลิก
+          </button>
+          
+          <button type="button" class="btn btn-danger" @click="executeLogout">
+            ยืนยัน ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
-const router = useRouter()
+const showLogoutModal = ref(false)
 
-const logout = () => {
-  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
-    localStorage.removeItem('admin_token')
-    router.push('/login')
-  }
+const executeLogout = () => {
+  // ลบ Token ทิ้ง
+  localStorage.removeItem('admin_token')
+  showLogoutModal.value = false
+
+  // 🟢 บังคับเปลี่ยนหน้าและล้างแคช เพื่อให้ชัวร์ว่าหลุดออกไปหน้า Login 100%
+  window.location.replace('/login')
 }
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
+/* --- 🟢 สไตล์ของ Sidebar --- */
 .panda-sidebar {
-  width: 280px; /* ขยับความกว้างให้ตรงกับ App.vue */
+  width: 280px;
   height: 100vh;
   background: #ffffff;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid #e2e8f0;
   position: fixed;
   top: 0;
   left: 0;
   display: flex;
   flex-direction: column;
-  z-index: 1000; /* ให้อยู่เหนือเนื้อหาอื่นๆ */
+  z-index: 1000;
   font-family: 'Kanit', sans-serif;
-  transition: all 0.3s ease;
 }
 
-.sidebar-brand {
-  padding: 30px 24px;
-  display: flex;
-  justify-content: center;
-  border-bottom: 1px solid #f8fafc;
-}
-
-.brand-logo {
-  height: 45px;
-  width: auto;
-  display: block;
-}
-
-.sidebar-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 0;
-}
-
-/* ซ่อน Scrollbar ให้ดูสะอาดตา */
+.sidebar-brand { padding: 30px 24px; display: flex; justify-content: center; border-bottom: 1px solid #f8fafc; }
+.brand-logo { height: 45px; width: auto; display: block; }
+.sidebar-scroll-area { flex: 1; overflow-y: auto; padding: 20px 0; }
 .sidebar-scroll-area::-webkit-scrollbar { width: 4px; }
 .sidebar-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-
-.sidebar-menu {
-  list-style: none;
-  margin: 0;
-  padding: 0 15px;
-}
-
-.menu-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #94a3b8;
-  padding: 10px 15px 5px;
-  letter-spacing: 1px;
-}
-
+.sidebar-menu { list-style: none; margin: 0; padding: 0 15px; }
+.menu-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; padding: 10px 15px 5px; letter-spacing: 1px; }
 .mt-4 { margin-top: 1.5rem; }
 
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 15px;
-  border-radius: 12px;
-  text-decoration: none;
-  color: #64748b;
-  transition: all 0.2s ease-in-out;
-  margin-bottom: 4px;
-  position: relative;
-}
-
-/* 🟢 ICON BOX */
-.menu-icon-box {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8fafc;
-  color: #94a3b8;
-  border-radius: 10px;
-  transition: all 0.2s;
-}
-
+/* เมนู */
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; text-decoration: none; color: #64748b; transition: all 0.2s; margin-bottom: 4px; position: relative; }
+.menu-icon-box { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; color: #94a3b8; border-radius: 10px; transition: all 0.2s; }
 .menu-icon-box svg { width: 18px; height: 18px; }
-
 .menu-text { font-size: 1rem; font-weight: 400; }
 
-/* 🟢 HOVER STATE */
-.nav-link:hover {
-  background-color: #f1f5f9;
-  color: #1e293b;
-  transform: translateX(5px);
-}
+.nav-link:hover { background-color: #f1f5f9; color: #1e293b; transform: translateX(5px); }
+.nav-link:hover .menu-icon-box { background-color: #ffffff; color: #cc0000; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
-.nav-link:hover .menu-icon-box {
-  background-color: #ffffff;
-  color: #cc0000;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
+/* หน้าปัจจุบัน */
+.nav-link.router-link-active { background-color: #fef2f2; color: #cc0000; font-weight: 600; }
+.nav-link.router-link-active .menu-icon-box { background-color: #cc0000; color: #ffffff; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2); }
+.nav-link.router-link-active::after { content: ''; position: absolute; left: -15px; top: 20%; height: 60%; width: 4px; background-color: #cc0000; border-radius: 0 4px 4px 0; }
 
-/* 🟢 ACTIVE STATE (ตอนนี้อยู่ที่หน้าไหน) */
-.nav-link.router-link-active {
-  background-color: #fef2f2; /* พื้นหลังแดงอ่อน CI */
-  color: #cc0000; /* ตัวอักษรแดง CI */
-  font-weight: 600;
-}
-
-.nav-link.router-link-active .menu-icon-box {
-  background-color: #cc0000;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2);
-}
-
-/* ขีดแดงด้านข้างบอกตำแหน่งปัจจุบัน */
-.nav-link.router-link-active::after {
-  content: '';
-  position: absolute;
-  left: -15px;
-  top: 20%;
-  height: 60%;
-  width: 4px;
-  background-color: #cc0000;
-  border-radius: 0 4px 4px 0;
-}
-
-/* 🟢 LOGOUT STYLE */
+/* ออกจากระบบ */
 .logout-link { color: #ef4444; margin-top: 10px; }
 .logout-link .logout-icon { background-color: #fff1f2; color: #ef4444; }
 .logout-link:hover { background-color: #fff1f2; }
-.logout-link:hover .logout-icon { background-color: #fecaca; }
+.logout-link:hover .logout-icon { background-color: #fecaca; color: #b91c1c; }
 
-/* ซ่อน Sidebar เมื่ออยู่บนมือถือ (ให้ใช้ TopMenu.vue แทน) */
+/* --- 🟢 สไตล์ของ Popup (Modal) --- */
+.custom-modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; /* ให้อยู่หน้าสุด */
+}
+
+.logout-modal-box {
+  width: 90%; max-width: 400px; padding: 30px; background: white;
+  border-top: 5px solid #dc2626; border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  font-family: 'Kanit', sans-serif;
+  animation: modalPop 0.3s ease-out forwards;
+}
+.modal-title ,.modal-desc{
+    text-align: center;
+}
+
+@keyframes modalPop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+.warning-icon-large { width: 70px; height: 70px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.1); }
+.modal-title { font-size: 1.4rem; color: #1e293b; font-weight: 600; margin-bottom: 8px; }
+.modal-desc { color: #64748b; font-size: 0.95rem; line-height: 1.5; }
+
+.modal-actions-center { display: flex; gap: 12px; justify-content: center; margin-top: 25px; }
+
+.btn { font-family: 'Kanit', sans-serif; border: none; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; padding: 10px 20px; }
+.btn-outline-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; }
+.btn-outline-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+.btn-danger { background-color: #dc2626; color: white; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2); }
+.btn-danger:hover { background-color: #b91c1c; transform: translateY(-1px); }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
 @media (max-width: 991px) {
-  .panda-sidebar {
-    display: none;
-  }
+  .panda-sidebar { display: none; }
 }
 </style>

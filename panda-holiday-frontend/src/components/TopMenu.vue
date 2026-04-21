@@ -28,7 +28,7 @@
     ></div>
   </transition>
 
-  <aside class="panda-sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
+  <aside class="panda-sidebar shadow-sm" :class="{ 'mobile-open': isMobileMenuOpen }">
     <div class="sidebar-brand">
       <router-link to="/" class="brand-link" @click="closeMobileMenu">
         <img
@@ -50,7 +50,7 @@
                 <path d="M11.47 3.84a.75.75 0 011.06 0l8.99 8.24a.75.75 0 11-1.02 1.1l-1.75-1.6v8.17a1.5 1.5 0 01-1.5 1.5h-4.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-2.25a.75.75 0 00-.75.75v4.5a.75.75 0 01-.75.75h-4.5a1.5 1.5 0 01-1.5-1.5v-8.17l-1.75 1.6a.75.75 0 11-1.02-1.1l8.99-8.24z" />
               </svg>
             </span>
-            <span class="menu-text">หน้าแรก</span>
+            <span class="menu-text">หน้าแรก (Overview)</span>
           </router-link>
         </li>
 
@@ -66,17 +66,6 @@
         </li>
 
         <li class="menu-label mt-4">DATA MANAGEMENT</li>
-
-        <li>
-          <router-link to="/airlines" class="nav-link" @click="closeMobileMenu">
-            <span class="menu-icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-              </svg>
-            </span>
-            <span class="menu-text">สายการบิน</span>
-          </router-link>
-        </li>
 
         <li>
           <router-link to="/destinations" class="nav-link" @click="closeMobileMenu">
@@ -123,9 +112,20 @@
           </router-link>
         </li>
 
+        <li>
+          <router-link to="/airlines" class="nav-link" @click="closeMobileMenu">
+            <span class="menu-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+              </svg>
+            </span>
+            <span class="menu-text">สายการบิน</span>
+          </router-link>
+        </li>
+
         <li class="menu-label mt-4">ACCOUNT</li>
         <li>
-          <a href="#" class="nav-link logout-link" @click.prevent="logout">
+          <a href="#" class="nav-link logout-link" @click.prevent="promptLogout">
             <span class="menu-icon-box logout-icon">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
@@ -137,15 +137,48 @@
       </ul>
     </div>
   </aside>
+
+  <transition name="modal-fade">
+    <div v-if="showLogoutModal" class="custom-modal-overlay" @click.self="cancelLogout">
+      <div class="custom-modal-box logout-modal-box shadow-lg text-center">
+        
+        <div class="warning-icon-large">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="40" height="40">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+        </div>
+        
+        <h3 class="modal-title mt-3">ยืนยันการออกจากระบบ?</h3>
+        <p class="modal-desc mt-2">
+          คุณกำลังจะออกจากระบบ Panda Admin <br>
+          ต้องการดำเนินการต่อหรือไม่?
+        </p>
+        
+        <div class="modal-actions-center mt-4">
+          <button type="button" class="btn btn-outline-secondary" @click="cancelLogout" :disabled="isLoggingOut">
+            ยกเลิก
+          </button>
+          <button type="button" class="btn btn-danger" @click="confirmLogout" :disabled="isLoggingOut">
+            <span v-if="isLoggingOut">⏳ กำลังออก...</span>
+            <span v-else>🚪 ยืนยัน ออกจากระบบ</span>
+          </button>
+        </div>
+        
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-// 🟢 1. Import useRouter สำหรับนำทาง
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
+
+// 🟢 ตัวแปรสำหรับควบคุม Modal ออกจากระบบ
+const showLogoutModal = ref(false)
+const isLoggingOut = ref(false)
 
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
@@ -157,11 +190,28 @@ const handleResize = () => {
   }
 }
 
-// 🟢 2. ฟังก์ชันออกจากระบบ
-const logout = () => {
-  localStorage.removeItem('admin_token') // ลบ Token ทิ้ง
-  router.push('/login') // เด้งกลับหน้า Login
-  closeMobileMenu() // ปิดเมนูบนมือถือเพื่อความเรียบร้อย
+// 🟢 ฟังก์ชันเมื่อกดคลิกเมนู "ออกจากระบบ" (สั่งให้โชว์ Popup ก่อน)
+const promptLogout = () => {
+  showLogoutModal.value = true
+}
+
+// 🟢 ฟังก์ชันเมื่อกดยกเลิกใน Popup
+const cancelLogout = () => {
+  showLogoutModal.value = false
+}
+
+// 🟢 ฟังก์ชันเมื่อกดยืนยันใน Popup
+const confirmLogout = () => {
+  isLoggingOut.value = true // เปลี่ยนสถานะเป็นกำลังโหลดเพื่อโชว์ไอคอนนาฬิกาทราย
+  
+  // หน่วงเวลาเล็กน้อยให้ผู้ใช้เห็นว่าระบบกำลังทำงาน ก่อนจะเด้งไปหน้า Login
+  setTimeout(() => {
+    localStorage.removeItem('admin_token') 
+    router.push('/login') 
+    closeMobileMenu()
+    showLogoutModal.value = false
+    isLoggingOut.value = false
+  }, 600)
 }
 
 onMounted(() => {
@@ -184,16 +234,16 @@ onBeforeUnmount(() => {
 }
 
 :root {
-  --primary-color: #cc0000;      /* สี CI Panda */
-  --primary-light: #fef2f2;      /* สีแดงพื้นหลังอ่อนๆ */
-  --text-main: #1e293b;          /* สีตัวอักษรหลัก */
-  --text-muted: #64748b;         /* สีตัวอักษรรอง */
-  --bg-hover: #f8fafc;           /* สีพื้นหลังตอน Hover */
+  --primary-color: #cc0000;
+  --primary-light: #fef2f2;
+  --text-main: #1e293b;          
+  --text-muted: #64748b;         
+  --bg-hover: #f1f5f9;
   --sidebar-width: 280px;
 }
 
 /* -----------------------------------
-   🟢 SIDEBAR DESKTOP
+   🟢 SIDEBAR
 ----------------------------------- */
 .panda-sidebar {
   font-family: 'Kanit', sans-serif;
@@ -204,17 +254,17 @@ onBeforeUnmount(() => {
   height: 100vh;
   background: #ffffff;
   border-right: 1px solid #f1f5f9;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
   z-index: 1000;
+  transition: all 0.3s ease;
 }
 
 .sidebar-brand {
-  padding: 28px 24px;
+  padding: 30px 24px;
   display: flex;
-  align-items: center;
   justify-content: center;
+  border-bottom: 1px solid #f8fafc;
 }
 
 .brand-link {
@@ -223,50 +273,27 @@ onBeforeUnmount(() => {
   text-decoration: none;
   transition: transform 0.2s ease;
 }
-.brand-link:hover {
-  transform: scale(1.02);
-}
+.brand-link:hover { transform: scale(1.02); }
+.brand-logo { height: 45px; width: auto; display: block; }
 
-.brand-logo {
-  display: block;
-  height: 48px;
-  width: auto;
-}
-
-/* Scroll Area ซ่อน Scrollbar ให้ดูคลีน */
 .sidebar-scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 20px;
+  padding: 20px 0;
 }
-.sidebar-scroll-area::-webkit-scrollbar {
-  width: 4px;
-}
-.sidebar-scroll-area::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 4px;
-}
+.sidebar-scroll-area::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 
-.sidebar-menu {
-  list-style: none;
-  margin: 0;
-  padding: 10px 20px;
-}
-
-.sidebar-menu li {
-  margin-bottom: 6px;
-}
+.sidebar-menu { list-style: none; margin: 0; padding: 0 15px; }
 
 .menu-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #94a3b8;
-  padding: 12px 14px 8px;
+  padding: 10px 15px 5px;
   letter-spacing: 1px;
 }
-.mt-4 {
-  margin-top: 1rem;
-}
+.mt-4 { margin-top: 1.5rem; }
 
 /* -----------------------------------
    🟢 MENU LINKS & ICONS
@@ -274,195 +301,176 @@ onBeforeUnmount(() => {
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 15px;
   border-radius: 12px;
   text-decoration: none;
   color: var(--text-muted);
   transition: all 0.2s ease-in-out;
+  margin-bottom: 4px;
   position: relative;
 }
 
-/* กรอบสี่เหลี่ยมรองรับ Icon */
 .menu-icon-box {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.menu-icon-box svg { width: 18px; height: 18px; }
+.menu-text { font-size: 1rem; font-weight: 400; }
+
+.nav-link:hover { background: var(--bg-hover); color: var(--text-main); transform: translateX(5px); }
+.nav-link:hover .menu-icon-box { background-color: #ffffff; color: var(--primary-color); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+.nav-link.router-link-active { background: var(--primary-light); color: var(--primary-color); font-weight: 600; }
+.nav-link.router-link-active .menu-icon-box { background-color: var(--primary-color); color: #ffffff; box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2); }
+.nav-link.router-link-active::after { content: ''; position: absolute; left: -15px; top: 20%; height: 60%; width: 4px; background-color: var(--primary-color); border-radius: 0 4px 4px 0; }
+
+/* LOGOUT BUTTON */
+.logout-link { color: #ef4444; margin-top: 10px; }
+.logout-link .logout-icon { background-color: #fff1f2; color: #ef4444; }
+.logout-link:hover { background-color: #fff1f2; }
+.logout-link:hover .logout-icon { background-color: #fecaca; color: #b91c1c; }
+
+/* -----------------------------------
+   🟢 MODAL STYLES (สำหรับ Popup ออกจากระบบ)
+----------------------------------- */
+.custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.logout-modal-box {
+  width: 90%;
+  max-width: 400px;
+  padding: 30px;
+  background: white;
+  border-top: 5px solid #dc2626; 
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalPop 0.3s ease-out forwards;
+  font-family: 'Kanit', sans-serif;
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.warning-icon-large {
+  width: 70px;
+  height: 70px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.1);
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  color: #1e293b;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.modal-desc {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-actions-center {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+/* ปุ่มใน Modal */
+.btn {
+  font-family: 'Kanit', sans-serif;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-weight: 500;
+  padding: 10px 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: #f1f5f9;
-  color: #64748b;
-  border-radius: 10px;
-  transition: all 0.2s ease-in-out;
+  gap: 6px;
 }
 
-.menu-icon-box svg {
-  width: 18px;
-  height: 18px;
+.btn-outline-secondary {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+.btn-outline-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
 }
 
-.menu-text {
-  font-size: 1.05rem;
-  font-weight: 400;
+.btn-danger {
+  background-color: #dc2626;
+  color: white;
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* Hover State */
-.nav-link:hover {
-  background: var(--bg-hover);
-  color: var(--text-main);
-  transform: translateX(4px);
-}
-.nav-link:hover .menu-icon-box {
-  background-color: #e2e8f0;
-  color: var(--text-main);
-}
-
-/* Active State (สีแดง Panda) */
-.nav-link.router-link-active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  font-weight: 500;
-}
-.nav-link.router-link-active .menu-icon-box {
-  background-color: var(--primary-color);
-  color: #cc0000;
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.15);
-}
-
-/* ขีดแดงด้านข้างตอน Active */
-.nav-link.router-link-active::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 15%;
-  height: 70%;
-  width: 4px;
-  background-color: var(--primary-color);
-  border-radius: 0 4px 4px 0;
-}
-
-/* -----------------------------------
-   🟢 LOGOUT BUTTON STYLES
------------------------------------ */
-.logout-link {
-  color: #dc2626; /* แดงเข้ม */
-}
-.logout-link .logout-icon {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-.logout-link:hover {
-  background-color: #fef2f2;
-  color: #b91c1c;
-}
-.logout-link:hover .logout-icon {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 
 /* -----------------------------------
    🟢 MOBILE TOP BAR
 ----------------------------------- */
-.mobile-topbar {
-  display: none;
-}
+.mobile-topbar { display: none; }
+.mobile-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); z-index: 1190; }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-.mobile-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 1190;
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* Hamburger Icon Animation */
-.hamburger-icon {
-  width: 24px;
-  height: 20px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.hamburger-icon span {
-  display: block;
-  height: 2.5px;
-  width: 100%;
-  background: var(--text-main);
-  border-radius: 3px;
-  transition: all 0.3s ease;
-}
-.hamburger-icon.is-active span:nth-child(1) {
-  transform: translateY(8.5px) rotate(45deg);
-}
-.hamburger-icon.is-active span:nth-child(2) {
-  opacity: 0;
-}
-.hamburger-icon.is-active span:nth-child(3) {
-  transform: translateY(-8.5px) rotate(-45deg);
-}
-
+.hamburger-icon { width: 24px; height: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
+.hamburger-icon span { display: block; height: 2.5px; width: 100%; background: var(--text-main); border-radius: 3px; transition: all 0.3s ease; }
+.hamburger-icon.is-active span:nth-child(1) { transform: translateY(8.5px) rotate(45deg); }
+.hamburger-icon.is-active span:nth-child(2) { opacity: 0; }
+.hamburger-icon.is-active span:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); }
 
 @media (max-width: 991px) {
-  .mobile-topbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 70px;
-    padding: 0 20px;
-    background: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 1200;
-  }
+  .mobile-topbar { position: fixed; top: 0; left: 0; right: 0; height: 70px; padding: 0 20px; background: #ffffff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); display: flex; align-items: center; justify-content: space-between; z-index: 1200; }
+  .mobile-topbar .brand-logo { height: 38px; }
+  .mobile-toggle { border: 0; background: var(--primary-color); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .mobile-toggle .hamburger-icon span { background: #ffffff; }
 
-  .mobile-topbar .brand-logo {
-    height: 38px;
-  }
-
-  .mobile-toggle {
-    border: 0;
-    background: #cc0000; /* สีแดงของ Panda */
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #ffffff; /* เปลี่ยนสีขีด Hamburger เป็นขาวถ้าพื้นหลังแดง */
-  }
-  .mobile-toggle .hamburger-icon span {
-    background: #ffffff;
-  }
-
-  .sidebar-brand {
-    display: none; 
-  }
-
-  .panda-sidebar {
-    top: 70px;
-    width: var(--sidebar-width);
-    height: calc(100vh - 70px);
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1201;
-    box-shadow: none;
-  }
-
-  .panda-sidebar.mobile-open {
-    transform: translateX(0);
-    box-shadow: 15px 0 30px rgba(0, 0, 0, 0.1);
-  }
+  .sidebar-brand { display: none; }
+  .panda-sidebar { top: 70px; width: var(--sidebar-width); height: calc(100vh - 70px); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1201; box-shadow: none; }
+  .panda-sidebar.mobile-open { transform: translateX(0); box-shadow: 15px 0 30px rgba(0, 0, 0, 0.1); }
+  
+  /* ให้ปุ่ม Modal ในมือถือเรียงเป็นแนวตั้งเพื่อกดง่ายขึ้น */
+  .modal-actions-center { flex-direction: column-reverse; }
+  .modal-actions-center .btn { width: 100%; padding: 12px; }
 }
 </style>

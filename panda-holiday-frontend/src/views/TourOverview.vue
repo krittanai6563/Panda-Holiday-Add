@@ -100,9 +100,7 @@
 </select>
 
           <div class="action-right">
-            <router-link :to="`/tour/${tour.id}`" class="btn btn-icon btn-edit" title="แก้ไขโปรแกรมนี้">
-              ✏️
-            </router-link>
+            <router-link :to="'/tour/' + tour.id" class="btn btn-icon btn-edit"> ✏️ </router-link>
             <button @click="openDeleteModal(tour.id)" class="btn btn-icon btn-delete" title="ลบทิ้ง" :disabled="tour.isUpdating">
               🗑️
             </button>
@@ -310,7 +308,7 @@ const executeDelete = async () => {
 }
 
 const secureApi = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1', 
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
   timeout: 60000
 })
 
@@ -420,6 +418,9 @@ onMounted(async () => {
   padding: 30px;
   max-width: 1300px;
   margin: 0 auto;
+}
+.modal-title,.modal-desc  {
+  text-align: center;
 }
 
 
@@ -628,9 +629,56 @@ onMounted(async () => {
 }
 
 .tour-display-area.grid-mode {
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(4, 1fr); /* บังคับ 4 การ์ดต่อ 1 แถว */
 }
 
+
+/* ---------------------------------------------------
+   🟢 3. RESPONSIVE SUPPORT (รองรับมือถือ & แท็บเล็ต)
+--------------------------------------------------- */
+/* หน้าจอคอมพิวเตอร์ขนาดเล็ก (ลดเหลือ 3 การ์ด) */
+@media (max-width: 1200px) {
+  .tour-display-area.grid-mode {
+    grid-template-columns: repeat(3, 1fr); 
+  }
+}
+
+/* หน้าจอแท็บเล็ต (ลดเหลือ 2 การ์ด) */
+@media (max-width: 992px) {
+  .tour-overview-container { padding: 20px; }
+  .tour-display-area.grid-mode {
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  .tour-display-area.list-mode .tour-card { height: auto; align-items: center; }
+}
+
+/* หน้าจอมือถือ (ลดเหลือ 1 การ์ด) */
+@media (max-width: 768px) {
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
+  .search-box { max-width: 100%; }
+  .filter-actions { justify-content: space-between; width: 100%; }
+  
+  /* บังคับเหลือ 1 แถวบนมือถือ */
+  .tour-display-area.grid-mode {
+    grid-template-columns: 1fr; 
+  }
+
+  /* บังคับ List Mode ให้การ์ดพับลงมาในจอเล็ก */
+  .tour-display-area.list-mode .tour-card { flex-direction: column; height: auto; }
+  .tour-display-area.list-mode .card-image { width: 100%; border-right: none; border-bottom: 1px solid #f1f5f9; height: 200px; }
+  .tour-display-area.list-mode .card-actions { width: 100%; flex-direction: row; justify-content: space-between; border-top: 1px solid #f1f5f9; }
+}
+
+@media (max-width: 576px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .page-header .btn { width: 100%; justify-content: center; }
+  
+  .filter-actions { flex-direction: column; align-items: stretch; }
+  .view-toggle { justify-content: center; }
+  
+  .modal-actions-center { flex-direction: column-reverse; }
+  .modal-actions-center .btn { width: 100%; padding: 12px; }
+}
 .tour-display-area.list-mode {
   grid-template-columns: 1fr;
 }

@@ -442,7 +442,7 @@
                     <img 
                       :src="getDirectDriveLink(currentPreviewTour.featured_image_url)" 
                       class="img-preview-main"
-                      @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" 
+                      @error="$event.target.src='https://panda.co.th//wp-content/uploads/2026/03/tour-panda-defalt.webp'" 
                     />
                   </div>
                   <div class="pdf-link-container">
@@ -766,8 +766,8 @@ const confirmDuplicate = () => {
 
 const generateItineraryHtml = () => {
   const getIconHtml = (type) => {
-    if (type === 'food') return '<img class="alignnone size-full wp-image-2874" src="https://dev1.blupaperdev.com/wp-content/uploads/2025/12/schedule-food.svg" alt="" width="20" height="20" />'
-    if (type === 'plane') return '<img class="alignnone size-full wp-image-2873" src="https://dev1.blupaperdev.com/wp-content/uploads/2025/12/schedule-plane.svg" alt="" width="20" height="20" />'
+    if (type === 'food') return '<img class="alignnone size-full wp-image-2874" src="https://panda.co.th//wp-content/uploads/2025/12/schedule-food.svg" alt="" width="20" height="20" />'
+    if (type === 'plane') return '<img class="alignnone size-full wp-image-2873" src="https://panda.co.th//wp-content/uploads/2025/12/schedule-plane.svg" alt="" width="20" height="20" />'
     return '-'
   }
 
@@ -816,14 +816,15 @@ const loadingPricingCategories = ref(false)
 // API
 // ---------------------------------------------------------------------
 const publicApi = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1',
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
+// ตรวจสอบในไฟล์ src/views/TourList.vue และ TourDetail.vue
 const secureApi = axios.create({
-  // เปลี่ยนเป็นเรียกไฟล์ api.php แทนครับ
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ ที่ถูกต้อง
-  timeout: 120000
+  // 🟢 เปลี่ยนจาก dev1.blupaperdev.com เป็น panda.co.th
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
+  timeout: 60000
 })
 // 🟢 1. ฟังก์ชันคัดลอกรอบเดินทาง (ดึงมาแค่ราคา ไม่ดึงวันที่)
 // 🟢 ฟังก์ชันคัดลอกรอบเดินทาง (แบบระบุจำนวนได้)
@@ -1112,7 +1113,7 @@ const buildPayload = () => {
     // ถ้าข้อมูลครบแล้ว ให้ยึดตามที่ผู้ใช้อาจจะตั้งค่าไว้ (หรือบังคับเป็น publish ก็ได้)
     payload.status = formData.value.status || 'publish'
   }
-  
+
   // 🟢 1. ตัด HTML ออกจาก Excerpt ให้เหลือเฉพาะข้อความล้วน
   if (payload.excerpt) {
     // ใช้สร้าง Element จำลองเพื่อดูดเฉพาะข้อความ (ป้องกัน Tag หรือ &nbsp; หลุดไป)
@@ -1379,7 +1380,7 @@ const convertDate = (dateStr) => {
 };
 
 const getDirectDriveLink = (url) => {
- if (!url) return 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp';
+ if (!url) return 'https://panda.co.th//wp-content/uploads/2026/03/tour-panda-defalt.webp';
   
   if (url.includes('drive.google.com')) {
     const match = url.match(/\/d\/([^/?#]+)|id=([^&?#]+)/);

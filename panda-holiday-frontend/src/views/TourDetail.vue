@@ -375,15 +375,16 @@ const tourId = route.params.id
 
 // 1. API สำหรับดึงข้อมูลมาแสดงผล (วิ่งไปหา WordPress)
 const publicApi = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1',
+  baseURL: 'https://panda.co.th//wp-json/blupaper/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
 
-// 2. API สำหรับอัปโหลดรูปและอัปเดตข้อมูล (วิ่งไปหา Node.js บน Render)
+// ตรวจสอบในไฟล์ src/views/TourList.vue และ TourDetail.vue
 const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
-  timeout: 120000
+  // 🟢 เปลี่ยนจาก dev1.blupaperdev.com เป็น panda.co.th
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
+  timeout: 60000
 })
 // ---------------------------------------------------------------------
 // DEFAULT FORM
@@ -480,8 +481,8 @@ watch(() => formData.value.trip_days, (newDays) => {
 
 const generateItineraryHtml = () => {
   const getIcon = (type) => {
-    if (type === 'food') return '<img class="alignnone size-full wp-image-2874" src="https://dev1.blupaperdev.com/wp-content/uploads/2025/12/schedule-food.svg" width="20" height="20" />'
-    if (type === 'plane') return '<img class="alignnone size-full wp-image-2873" src="https://dev1.blupaperdev.com/wp-content/uploads/2025/12/schedule-plane.svg" width="20" height="20" />'
+    if (type === 'food') return '<img class="alignnone size-full wp-image-2874" src="https://panda.co.th//wp-content/uploads/2025/12/schedule-food.svg" width="20" height="20" />'
+    if (type === 'plane') return '<img class="alignnone size-full wp-image-2873" src="https://panda.co.th//wp-content/uploads/2025/12/schedule-plane.svg" width="20" height="20" />'
     return '-'
   }
   let html = `<table>\n<thead>\n<tr>\n<th>วันที่</th>\n<th>กำหนดการ</th>\n<th>เช้า</th>\n<th>กลางวัน</th>\n<th>ค่ำ</th>\n<th>โรงแรม</th>\n</tr>\n</thead>\n<tbody>\n`
