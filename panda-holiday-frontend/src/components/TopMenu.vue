@@ -65,8 +65,6 @@
           </router-link>
         </li>
 
-        
-
         <li class="menu-label mt-4">DATA MANAGEMENT</li>
 
         <li>
@@ -124,6 +122,18 @@
             <span class="menu-text">หมวดหมู่ราคา</span>
           </router-link>
         </li>
+
+        <li class="menu-label mt-4">ACCOUNT</li>
+        <li>
+          <a href="#" class="nav-link logout-link" @click.prevent="logout">
+            <span class="menu-icon-box logout-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </span>
+            <span class="menu-text">ออกจากระบบ</span>
+          </a>
+        </li>
       </ul>
     </div>
   </aside>
@@ -131,7 +141,10 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+// 🟢 1. Import useRouter สำหรับนำทาง
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const isMobileMenuOpen = ref(false)
 
 const closeMobileMenu = () => {
@@ -142,6 +155,13 @@ const handleResize = () => {
   if (window.innerWidth > 991) {
     isMobileMenuOpen.value = false
   }
+}
+
+// 🟢 2. ฟังก์ชันออกจากระบบ
+const logout = () => {
+  localStorage.removeItem('admin_token') // ลบ Token ทิ้ง
+  router.push('/login') // เด้งกลับหน้า Login
+  closeMobileMenu() // ปิดเมนูบนมือถือเพื่อความเรียบร้อย
 }
 
 onMounted(() => {
@@ -305,8 +325,8 @@ onBeforeUnmount(() => {
 }
 .nav-link.router-link-active .menu-icon-box {
   background-color: var(--primary-color);
-  color: #00a86b;
-  box-shadow: 0 4px 12px rgba(24, 138, 33, 0.2);
+  color: #cc0000;
+  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.15);
 }
 
 /* ขีดแดงด้านข้างตอน Active */
@@ -319,6 +339,25 @@ onBeforeUnmount(() => {
   width: 4px;
   background-color: var(--primary-color);
   border-radius: 0 4px 4px 0;
+}
+
+/* -----------------------------------
+   🟢 LOGOUT BUTTON STYLES
+----------------------------------- */
+.logout-link {
+  color: #dc2626; /* แดงเข้ม */
+}
+.logout-link .logout-icon {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+.logout-link:hover {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+.logout-link:hover .logout-icon {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 /* -----------------------------------
@@ -393,7 +432,7 @@ onBeforeUnmount(() => {
 
   .mobile-toggle {
     border: 0;
-    background: #00a86b;
+    background: #cc0000; /* สีแดงของ Panda */
     width: 44px;
     height: 44px;
     border-radius: 12px;
@@ -401,7 +440,10 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #111827;
+    color: #ffffff; /* เปลี่ยนสีขีด Hamburger เป็นขาวถ้าพื้นหลังแดง */
+  }
+  .mobile-toggle .hamburger-icon span {
+    background: #ffffff;
   }
 
   .sidebar-brand {

@@ -21,6 +21,7 @@
           {{ isEditMode ? '✏️ แก้ไขจุดหมายปลายทาง' : '✨ เพิ่มจุดหมายปลายทางใหม่' }}
         </h3>
         <form @submit.prevent="submitDestination" class="destination-form">
+          
           <div class="form-grid">
             <div class="form-group">
               <label>ชื่อจุดหมายปลายทาง <span class="text-danger">*</span></label>
@@ -73,15 +74,15 @@
             <div class="form-grid">
               <div class="form-group full-width">
                 <label>Focus Keyword</label>
-                <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น ทัวร์ญี่ปุ่น, เที่ยวญี่ปุ่น" class="form-control form-control-sm" />
+                <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น ทัวร์ญี่ปุ่น, เที่ยวญี่ปุ่น" class="form-control" />
               </div>
               <div class="form-group full-width">
                 <label>SEO Title <span class="text-muted">(แนะนำไม่เกิน 60 ตัวอักษร)</span></label>
-                <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าอัตโนมัติ" class="form-control form-control-sm" />
+                <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าอัตโนมัติ" class="form-control" />
               </div>
               <div class="form-group full-width">
                 <label>SEO Description <span class="text-muted">(แนะนำไม่เกิน 160 ตัวอักษร)</span></label>
-                <textarea v-model="formData.rank_math_description" rows="2" placeholder="คำอธิบายที่จะโชว์บน Google..." class="form-control form-control-sm"></textarea>
+                <textarea v-model="formData.rank_math_description" rows="2" placeholder="คำอธิบายที่จะโชว์บน Google..." class="form-control"></textarea>
               </div>
             </div>
           </div>
@@ -97,7 +98,17 @@
       </div>
     </transition>
 
-    <div class="table-card shadow-sm mt-4">
+    <div v-if="isLoading" class="state-container mt-4">
+      <span class="loading-spinner">⏳</span> กำลังดึงข้อมูลจุดหมายปลายทาง...
+    </div>
+    <div v-else-if="errorMessage" class="state-container error-text mt-4">
+      ❌ {{ errorMessage }}
+    </div>
+    <div v-else-if="destinations.length === 0" class="state-container mt-4">
+      📭 ยังไม่มีข้อมูลจุดหมายปลายทางในระบบ
+    </div>
+
+    <div v-else class="table-card shadow-sm mt-4">
       <div class="table-responsive">
         <table class="modern-table">
           <thead>
@@ -110,13 +121,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="isLoading">
-              <td colspan="5" class="text-center p-4 text-muted">⏳ กำลังโหลดข้อมูล...</td>
-            </tr>
-            <tr v-else-if="destinations.length === 0">
-              <td colspan="5" class="text-center p-4 text-muted">📭 ยังไม่มีข้อมูลจุดหมายปลายทาง</td>
-            </tr>
-            <tr v-for="dest in destinations" :key="dest.id" v-else>
+            <tr v-for="dest in destinations" :key="dest.id" :class="{ 'highlight-row': isEditMode && editId === dest.id }">
               <td class="text-center">
                 <div class="thumbnail-wrapper">
                   <img v-if="dest.image_url" :src="dest.image_url" alt="cover" class="img-thumbnail" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
@@ -134,7 +139,7 @@
                 </span>
               </td>
               <td class="text-center">
-                <button class="btn-count" @click="viewTours(dest)" :class="{'empty': dest.count === 0}">
+                <button class="badge-count-btn" @click="viewTours(dest)" :disabled="dest.count === 0">
                   {{ dest.count }} รายการ
                 </button>
               </td>
@@ -148,21 +153,25 @@
           </tbody>
         </table>
       </div>
+      <div class="card-footer">
+        <small class="text-muted">ดึงข้อมูลสำเร็จทั้งหมด {{ destinations.length }} รายการ</small>
+      </div>
     </div>
 
-    <transition name="fade">
+    <transition name="slide-fade">
       <div v-if="showToursModal" class="modal-overlay" @click.self="showToursModal = false">
-        <div class="modal-content tours-modal shadow-lg">
-          <div class="modal-header">
-            <h3>ทัวร์ในปลายทาง "{{ selectedDest?.name }}"</h3>
-            <button @click="showToursModal = false" class="btn-close">✕</button>
-          </div>
-          <div class="modal-body p-0">
+        <div class="modal-content shadow-lg">
+          <header class="modal-header">
+            <h3>ทัวร์ในปลายทาง: {{ selectedDest?.name }}</h3>
+            <button @click="showToursModal = false" class="close-btn">&times;</button>
+          </header>
+          <div class="modal-body">
             <div v-if="isFetchingTours" class="text-center p-4">⏳ กำลังโหลดรายการทัวร์...</div>
-            <ul class="tour-list" v-else-if="toursInDest.length > 0">
-              <li v-for="tour in toursInDest" :key="tour.id" class="tour-list-item">
+            <ul v-else-if="toursInDest.length > 0" class="tour-list">
+              <li v-for="tour in toursInDest" :key="tour.id" class="tour-item">
+                <span class="tour-code">{{ tour.code || 'NO-CODE' }}</span>
                 <span class="tour-title">{{ tour.title }}</span>
-                <span class="status-badge" :class="(tour.status === 'publish' ? 'publish' : 'draft')"></span>
+                <span :class="'status-dot ' + (tour.status === 'publish' ? 'publish' : 'draft')"></span>
               </li>
             </ul>
             <p v-else class="text-center p-4 text-muted">ไม่มีทัวร์ในจุดหมายปลายทางนี้</p>
@@ -244,9 +253,9 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-// 🟢 ใช้ API เส้นหลักของระบบ
-const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
+// 🟢 แก้ไข Axios: เปลี่ยนชื่อเป็น api และลบ ?route= ออก
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php`, 
   timeout: 120000
 })
 
@@ -259,7 +268,8 @@ const fetchDestinations = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get('/taxonomy-terms/travel_locations')
+    // 🟢 เปลี่ยนมาส่ง route ผ่าน params
+    const response = await api.get('', { params: { route: 'taxonomy-terms/travel_locations' } })
     if (response.data && response.data.success) {
       destinations.value = response.data.items || []
     } else {
@@ -328,12 +338,13 @@ const submitDestination = async () => {
   try {
     let finalImageId = formData.value.image_id;
 
-    // ถ้ารูปมีการอัปโหลดใหม่
     if (formData.value.imageFile) {
       const uploadData = new FormData();
       uploadData.append('featuredImage', formData.value.imageFile); 
       
-      const uploadRes = await api.post('/upload-tour-assets', uploadData, {
+      // 🟢 ส่ง route ผ่าน params
+      const uploadRes = await api.post('', uploadData, {
+        params: { route: 'upload-tour-assets' },
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -355,9 +366,15 @@ const submitDestination = async () => {
 
     let response
     if (isEditMode.value) {
-      response = await api.post(`/taxonomy-terms/travel_locations/${editId.value}`, payload)
+      // 🟢 ส่ง route ผ่าน params (แก้ไข)
+      response = await api.post('', payload, { 
+        params: { route: `taxonomy-terms/travel_locations/${editId.value}` } 
+      })
     } else {
-      response = await api.post('/taxonomy-terms/travel_locations', payload)
+      // 🟢 ส่ง route ผ่าน params (เพิ่มใหม่)
+      response = await api.post('', payload, { 
+        params: { route: 'taxonomy-terms/travel_locations' } 
+      })
     }
 
     if (response.data && response.data.success) {
@@ -389,7 +406,11 @@ const executeDelete = async () => {
   isDeleting.value = true
 
   try {
-    const response = await api.delete(`/taxonomy-terms/travel_locations/${itemToDelete.value.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.delete('', { 
+      params: { route: `taxonomy-terms/travel_locations/${itemToDelete.value.id}` } 
+    })
+    
     if (response.data && response.data.success) {
       showToast('ลบข้อมูลสำเร็จ!', 'success')
       fetchDestinations()
@@ -413,7 +434,10 @@ const viewTours = async (destItem) => {
   toursInDest.value = []
 
   try {
-    const response = await api.get(`/taxonomy-tours/travel_locations/${destItem.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.get('', { 
+      params: { route: `taxonomy-tours/travel_locations/${destItem.id}` } 
+    })
     if (Array.isArray(response.data)) {
       toursInDest.value = response.data
     }
@@ -433,6 +457,10 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .admin-page-container {
   --color-primary: #cc0000;
   --color-secondary: #1a1a1a;
@@ -448,7 +476,7 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-/* Header */
+/* 🟢 Header */
 .page-header {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 25px; border-bottom: 2px solid var(--color-primary); padding-bottom: 15px;
@@ -457,7 +485,7 @@ onMounted(() => {
 .page-subtitle { color: #64748b; margin: 5px 0 0 0; font-weight: 300;}
 .header-actions { display: flex; gap: 10px; }
 
-/* Buttons */
+/* 🟢 Buttons */
 .btn { font-family: 'Kanit', sans-serif; border: none; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; padding: 10px 20px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-primary { background: var(--color-primary); color: white; box-shadow: 0 4px 6px rgba(204,0,0,0.15); }
@@ -474,22 +502,43 @@ onMounted(() => {
 .btn-edit:hover { background: #f0fdf4; border-color: #16a34a; color: #16a34a;}
 .btn-delete:hover { background: #fef2f2; border-color: #dc2626; color: #dc2626;}
 
-/* Form Card */
+/* 🟢 Form Card */
 .add-form-card { background: white; border-radius: 12px; padding: 30px; border: 1px solid var(--color-border); border-top: 4px solid var(--color-primary); margin-bottom: 25px; }
 .edit-mode-card { border-top-color: #3b82f6; }
 .form-title { font-size: 1.2rem; font-weight: 600; color: var(--color-secondary); margin: 0 0 20px 0; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* 🟢 Form Grid & Spacing (แก้ไขระยะห่างให้สมบูรณ์แล้ว) */
+.form-grid { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 20px; 
+}
+.form-group { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+  margin-bottom: 15px; /* สำรองระยะห่างบนจอมือถือ */
+}
 .full-width { grid-column: 1 / -1; }
 .form-group label { font-weight: 500; font-size: 0.95rem; color: var(--color-secondary); }
-.form-control { width: 100%; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Kanit', sans-serif; font-size: 0.95rem; transition: 0.2s; }
-.form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(204,0,0,0.1); }
-.form-control-sm { padding: 8px 12px; font-size: 0.9rem; }
+
+/* 🟢 Form Control (ปรับช่องให้ใหญ่ขึ้น) */
+.form-control { 
+  width: 100%; 
+  padding: 12px 15px; 
+  border: 1px solid #cbd5e1; 
+  border-radius: 8px; 
+  font-family: 'Kanit', sans-serif; 
+  font-size: 0.95rem; 
+  transition: 0.2s; 
+  outline: none;
+}
+.form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(204,0,0,0.1); }
 .text-danger { color: #dc2626; }
 .text-muted { color: #64748b; font-weight: 300; }
 .size-hint { font-size: 0.8rem; color: #64748b; font-weight: 300; margin-left: 8px; }
 
-/* Image Upload */
+/* 🟢 Image Upload */
 .custom-upload-box { width: 100%; position: relative; border: 2px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; transition: all 0.2s; overflow: hidden; min-height: 150px;}
 .custom-upload-box:hover { border-color: var(--color-primary); background: #fff5f5; }
 .hidden-input { position: absolute; width: 0; height: 0; opacity: 0; }
@@ -502,19 +551,39 @@ onMounted(() => {
 .hover-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0; transition: 0.2s; font-weight: 500; pointer-events: none;}
 .custom-upload-box:hover .hover-overlay { opacity: 1; }
 
-/* SEO Section */
-.seo-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
-.seo-title { font-size: 1rem; font-weight: 600; color: #2563eb; margin: 0 0 15px 0; display: flex; align-items: center; gap: 6px;}
+/* 🟢 SEO Section */
+.seo-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; }
+.seo-title { font-size: 1.1rem; font-weight: 600; color: #2563eb; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;}
+.mt-4 { margin-top: 1.5rem !important; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
 
-.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+/* 🟢 State Container (Loading / Error / Empty) */
+.state-container { 
+  text-align: center; 
+  padding: 50px; 
+  background: #fff; 
+  border-radius: 12px; 
+  border: 1px dashed #cbd5e1; 
+  color: #64748b; 
+  font-size: 1.1rem; 
+}
+.error-text { 
+  color: #cc0000; 
+  border-color: #fca5a5; 
+  background: #fef2f2; 
+}
 
-/* Table */
+/* 🟢 Table Styles */
 .table-card { background: white; border-radius: 12px; border: 1px solid var(--color-border); overflow: hidden; }
 .table-responsive { width: 100%; overflow-x: auto; }
 .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
 .modern-table th { background: #f8fafc; padding: 14px; text-align: left; color: #334155; font-weight: 600; border-bottom: 2px solid #cbd5e1; font-size: 0.95rem;}
 .modern-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #475569; }
 .modern-table tbody tr:hover td { background: #f8fafc; }
+.highlight-row { background-color: #fef3c7 !important; }
+
+/* 🟢 Footer สรุปรายการ */
+.card-footer { padding: 15px; border-top: 1px solid #e2e8f0; background-color: #f8fafc; }
 
 .thumbnail-wrapper { width: 60px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; margin: 0 auto; background: #f1f5f9; display: flex; align-items: center; justify-content: center;}
 .img-thumbnail { width: 100%; height: 100%; object-fit: cover; }
@@ -528,29 +597,32 @@ onMounted(() => {
 .seo-badge.good { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .seo-badge.poor { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
-.btn-count { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.2s; font-family: 'Kanit', sans-serif;}
-.btn-count:hover { background: #dbeafe; }
-.btn-count.empty { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; cursor: default; }
+.badge-count-btn { background-color: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; border: 1px solid #bbf7d0; cursor: pointer; transition: 0.2s; font-family: 'Kanit';}
+.badge-count-btn:hover:not(:disabled) { background-color: #dcfce7; transform: scale(1.05); }
+.badge-count-btn:disabled { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; cursor: default; transform: none;}
 
 .action-buttons { display: flex; gap: 8px; justify-content: center; }
 .text-center { text-align: center; }
 
-/* Modals & Overlays */
-.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 999; }
-.modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+/* 🟢 Modal ดูรายการทัวร์ (พรีเมียมแบบ Months) */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
+.modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; margin: 0; }
+.modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--color-secondary); font-weight: 600; }
+.modal-body { padding: 20px; overflow-y: auto; }
+.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; transition: 0.2s; }
+.close-btn:hover { color: #cc0000; }
 
-/* Tours Modal */
-.tours-modal .modal-header { padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-.tours-modal h3 { margin: 0; font-size: 1.1rem; color: var(--color-secondary); }
-.btn-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b; }
-.tour-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
-.tour-list-item { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
-.status-badge { width: 10px; height: 10px; border-radius: 50%; }
-.status-badge.publish { background: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
-.status-badge.draft { background: #d97706; box-shadow: 0 0 0 3px #fef3c7; }
+.tour-list { list-style: none; padding: 0; margin: 0; }
+.tour-item { padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+.tour-code { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tour-title { flex: 1; font-size: 0.95rem; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: auto;}
+.status-dot.publish { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
+.status-dot.draft { background: #cbd5e1; }
 
-/* Confirm Delete Modal */
-.confirm-modal { max-width: 400px; padding: 30px; text-align: center; border-top: 5px solid #dc2626; }
+/* 🟢 Confirm Delete Modal */
+.confirm-modal { max-width: 400px; padding: 30px; text-align: center; border-top: 5px solid #dc2626; border-radius: 12px;}
 .confirm-icon-wrapper { width: 60px; height: 60px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }
 .confirm-icon { font-size: 1.8rem; }
 .confirm-title { margin: 0 0 10px 0; font-size: 1.3rem; color: var(--color-secondary); }
@@ -558,13 +630,13 @@ onMounted(() => {
 .text-sm { font-size: 0.85rem; }
 .confirm-actions { display: flex; justify-content: center; gap: 10px; }
 
-/* Toast */
+/* 🟢 Toast */
 .custom-toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; background: white; display: flex; align-items: center; gap: 10px; z-index: 1000; font-weight: 500; border-left: 4px solid; }
 .custom-toast.success { border-left-color: #16a34a; color: #166534; background: #f0fdf4;}
 .custom-toast.error { border-left-color: #dc2626; color: #991b1b; background: #fef2f2;}
 .toast-icon { font-size: 1.2rem; }
 
-/* Transitions */
+/* 🟢 Transitions */
 .slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.3s ease; }
 .slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-20px); opacity: 0; }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
@@ -572,19 +644,22 @@ onMounted(() => {
 .toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
 .toast-slide-enter-from, .toast-slide-leave-to { opacity: 0; transform: translateX(50px); }
 
-/* Responsive Adjustments */
+/* 🟢 Responsive Adjustments (จัดเต็มสำหรับหน้าจอทุกขนาด) */
 @media (max-width: 768px) {
-  .form-grid { grid-template-columns: 1fr; gap: 15px; }
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .form-grid { 
+    grid-template-columns: 1fr; /* บังคับ 1 คอลัมน์ ไม่ให้ซ้อนทับกัน */
+    gap: 15px; 
   }
+  .seo-section { padding: 20px 15px; }
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
+
 @media (max-width: 576px) {
   .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
   .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .header-actions .btn { width: 100%; justify-content: center; padding: 10px; font-size: 0.9rem;}
-  
+  .form-actions { flex-direction: column-reverse; }
+  .form-actions .btn { width: 100%; }
   .confirm-actions { flex-direction: column-reverse; }
   .confirm-actions .btn { width: 100%; }
 }

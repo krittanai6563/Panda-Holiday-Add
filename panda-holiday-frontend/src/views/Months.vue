@@ -20,7 +20,7 @@
         <h3 class="form-title">
           {{ isEditMode ? '✏️ แก้ไขเดือนที่เดินทาง' : '✨ เพิ่มเดือนที่เดินทางใหม่' }}
         </h3>
-       <form @submit.prevent="submitMonth" class="destination-form">
+        <form @submit.prevent="submitMonth" class="destination-form">
           <div class="form-grid">
             <div class="form-group">
               <label>ชื่อเดือน <span class="text-danger">*</span></label>
@@ -35,6 +35,11 @@
               <label>Slug (URL ภาษาอังกฤษ/ไม่มีเว้นวรรค)</label>
               <input type="text" v-model="formData.slug" placeholder="เช่น january, february (เว้นว่างไว้ระบบจะสร้างให้)" class="form-control" />
             </div>
+            
+            <div class="form-group full-width">
+              <label>รายละเอียด (Description)</label>
+              <textarea v-model="formData.description" rows="2" placeholder="ใส่รายละเอียดเพิ่มเติมของเดือนนี้ (ถ้ามี)..." class="form-control"></textarea>
+            </div>
           
             <div class="form-group full-width">
               <label>
@@ -46,103 +51,97 @@
                 <input type="file" id="cover-upload" accept="image/*" @change="onImageChange" class="hidden-input" />
                 <label for="cover-upload" class="upload-label-area">
                   <template v-if="previewImage">
-                    <img :src="previewImage" class="preview-full-img" alt="Cover Preview" />
+                    <img :src="previewImage" class="preview-full-img" alt="Cover Preview" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
                     <div class="hover-overlay">
                       <span class="icon">📷</span> คลิกเพื่อเปลี่ยนรูปภาพ
                     </div>
                   </template>
-                  
                   <template v-else>
                     <div class="upload-placeholder">
-                      <div class="upload-icon">📸</div>
-                      <div class="upload-text">คลิกเพื่อเลือกไฟล์รูปภาพ หรือลากไฟล์มาวาง</div>
+                      <span class="upload-icon">🖼️</span>
+                      <span class="upload-text">คลิกเพื่ออัปโหลด หรือลากไฟล์มาวางที่นี่</span>
                     </div>
                   </template>
                 </label>
               </div>
             </div>
-            
-            <div class="form-group full-width">
-              <label>รายละเอียด (Description)</label>
-              <textarea v-model="formData.description" class="form-control" rows="3" placeholder="ใส่รายละเอียดเพิ่มเติมของเดือนนี้ (ถ้ามี)..."></textarea>
-            </div>
           </div>
 
           <div class="seo-section mt-4">
-              <h4 class="seo-heading"><span class="icon">🚀</span> ตั้งค่า SEO </h4>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Focus Keyword </label>
-                  <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น เที่ยวญี่ปุ่น, ทัวร์ยุโรป" class="form-control" />
-                </div>
-                <div class="form-group">
-                  <label>SEO Title</label>
-                  <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าเริ่มต้นของเว็บ" class="form-control" />
-                </div>
-                <div class="form-group full-width">
-                  <label>SEO Description</label>
-                  <textarea v-model="formData.rank_math_description" class="form-control" rows="2" placeholder="คำอธิบายดึงดูดใจสำหรับแสดงบน Google..."></textarea>
-                </div>
+            <h4 class="seo-title"><span class="icon">🔍</span> ตั้งค่า SEO (Rank Math)</h4>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Focus Keyword</label>
+                <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น ทัวร์มกราคม, เที่ยวหน้าหนาว" class="form-control" />
               </div>
-          </div>
-          
-          <div class="form-actions mt-3">
-            <div class="action-buttons">
-              <button v-if="isEditMode" type="button" @click="resetForm" class="btn btn-outline-secondary">
-                ยกเลิกการแก้ไข
-              </button>
-              <button type="submit" class="btn btn-success" :disabled="isSubmitting">
-                <span v-if="isSubmitting">⏳ กำลังบันทึก...</span>
-                <span v-else>{{ isEditMode ? '💾 บันทึกการแก้ไข' : '💾 บันทึกข้อมูล' }}</span>
-              </button>
+              <div class="form-group full-width">
+                <label>SEO Title <span class="text-muted">(แนะนำไม่เกิน 60 ตัวอักษร)</span></label>
+                <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าอัตโนมัติ" class="form-control" />
+              </div>
+              <div class="form-group full-width">
+                <label>SEO Description <span class="text-muted">(แนะนำไม่เกิน 160 ตัวอักษร)</span></label>
+                <textarea v-model="formData.rank_math_description" rows="2" placeholder="คำอธิบายที่จะโชว์บน Google..." class="form-control"></textarea>
+              </div>
             </div>
+          </div>
+
+          <div class="form-actions mt-4">
+            <button type="button" @click="resetForm" class="btn btn-outline-secondary">ยกเลิก</button>
+            <button type="submit" class="btn btn-success" :disabled="isSubmitting">
+              <span v-if="isSubmitting">⏳ กำลังบันทึก...</span>
+              <span v-else>{{ isEditMode ? '💾 บันทึกการแก้ไข' : '➕ เพิ่มข้อมูล' }}</span>
+            </button>
           </div>
         </form>
       </div>
     </transition>
 
-    <div v-if="isLoading" class="state-container">
+    <div v-if="isLoading" class="state-container mt-4">
       <span class="loading-spinner">⏳</span> กำลังดึงข้อมูลเดือนที่เดินทาง...
     </div>
-    <div v-else-if="errorMessage" class="state-container error-text">
+    <div v-else-if="errorMessage" class="state-container error-text mt-4">
       ❌ {{ errorMessage }}
     </div>
-    <div v-else-if="months.length === 0" class="state-container">
+    <div v-else-if="months.length === 0" class="state-container mt-4">
       📭 ยังไม่มีข้อมูลเดือนที่เดินทางในระบบ
     </div>
 
-    <div v-else class="table-card shadow-sm">
+    <div v-else class="table-card shadow-sm mt-4">
       <div class="table-responsive">
         <table class="modern-table">
           <thead>
             <tr>
               <th width="80" class="text-center">ลำดับ</th>
-              <th width="100" class="text-center">รูปภาพ</th> <th width="20%">ชื่อเดือน (Name)</th>
+              <th width="100" class="text-center">รูปภาพ</th> 
+              <th width="20%">ชื่อเดือน (Name)</th>
               <th width="30%">รายละเอียด (Description)</th>
               <th width="120" class="text-center">จำนวนทัวร์</th>
               <th width="100" class="text-center">จัดการ</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(monthItem, index) in months" :key="index" :class="{ 'highlight-row': isEditMode && editId === monthItem.id }">
+            <tr v-for="(monthItem, index) in months" :key="monthItem.id" :class="{ 'highlight-row': isEditMode && editId === monthItem.id }">
               <td class="text-center font-bold" data-label="ลำดับ">{{ index + 1 }}</td>
               
               <td class="text-center" data-label="รูปภาพ">
                 <div class="table-image-wrapper">
-                  <img v-if="monthItem.image_url" :src="monthItem.image_url" class="table-img" />
+                  <img v-if="monthItem.image_url" :src="monthItem.image_url" class="table-img" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
                   <span v-else class="no-img">🖼️</span>
                 </div>
               </td>
 
-              <td class="dest-name" data-label="ชื่อเดือน">{{ monthItem.name }}</td>
-              <td data-label="รายละเอียด" class="description-cell">{{ monthItem.description || '-' }}</td>
+              <td data-label="ชื่อเดือน">
+                <div class="item-name">{{ monthItem.name }}</div>
+                <div class="item-en-name" v-if="monthItem.category_en_name">EN: {{ monthItem.category_en_name }}</div>
+              </td>
+              <td class="description-cell" data-label="รายละเอียด">{{ monthItem.description || '-' }}</td>
               <td class="text-center" data-label="จำนวนทัวร์">
                 <button @click="viewTours(monthItem)" class="badge-count-btn" :disabled="monthItem.count === 0">
                   {{ monthItem.count }} ทัวร์
                 </button>
               </td>
               <td class="text-center" data-label="จัดการ">
-                <div class="action-flex">
+                <div class="action-buttons">
                   <button @click="openEditForm(monthItem)" class="btn-icon btn-edit" title="แก้ไข">✏️</button>
                   <button @click="confirmDelete(monthItem.id, monthItem.name)" class="btn-icon btn-delete" title="ลบ">🗑️</button>
                 </div>
@@ -233,15 +232,11 @@ const formData = ref({
   image_url: ''
 })
 
-// 🟢 1. ตัวแปรและ Computed สำหรับจัดการ Preview รูปภาพที่เพิ่งอัปโหลด
 const localImagePreview = ref(null)
 
 const previewImage = computed(() => {
-  // ถ้ามีการเลือกไฟล์ใหม่จากเครื่อง ให้โชว์ไฟล์ใหม่ก่อน
   if (localImagePreview.value) return localImagePreview.value
-  // ถ้าไม่มีไฟล์ใหม่ แต่มี URL รูปเก่าจากฐานข้อมูล ให้โชว์รูปเก่า
   if (formData.value.image_url) return formData.value.image_url
-  // ถ้าไม่มีอะไรเลย คืนค่า null (เพื่อแสดงกรอบอัปโหลดแบบว่างเปล่า)
   return null
 })
 
@@ -255,8 +250,9 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
+// 🟢 แก้ไข Axios: เปลี่ยนเป็น api และลบ ?route= ออก
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php`, 
   timeout: 120000
 })
 
@@ -269,7 +265,8 @@ const fetchMonths = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get('/taxonomy-terms/month')
+    // 🟢 เปลี่ยนมาส่ง route ผ่าน params
+    const response = await api.get('', { params: { route: 'taxonomy-terms/month' } })
     if (response.data && response.data.success) {
       months.value = response.data.items || []
     } else {
@@ -277,6 +274,7 @@ const fetchMonths = async () => {
     }
   } catch (error) {
     errorMessage.value = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้'
+    showToast('ดึงข้อมูลไม่สำเร็จ', 'error')
   } finally {
     isLoading.value = false
   }
@@ -293,7 +291,7 @@ const resetForm = () => {
     rank_math_title: '', rank_math_description: '', rank_math_focus_keyword: '',
     imageFile: null, image_id: '', image_url: ''
   }
-  localImagePreview.value = null // 🟢 เคลียร์รูป Preview ทิ้ง
+  localImagePreview.value = null 
   isEditMode.value = false
   editId.value = null
   showAddForm.value = false
@@ -312,19 +310,18 @@ const openEditForm = (monthItem) => {
     rank_math_focus_keyword: monthItem.rank_math_focus_keyword || '',
     image_id: monthItem.image_id || '',
     image_url: monthItem.image_url || '',
-    imageFile: null // รีเซ็ตไฟล์ที่เลือกเผื่อไว้
+    imageFile: null 
   }
-  localImagePreview.value = null // 🟢 เคลียร์รูป Preview ของเก่า เพื่อให้มันไปดึง formData.image_url แทน
+  localImagePreview.value = null 
   showAddForm.value = true
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// 🟢 2. จัดการเมื่อเลือกไฟล์รูปภาพ (สร้าง URL จำลองให้เห็นภาพสดๆ)
 const onImageChange = (e) => {
   const file = e.target.files[0]
   if (file) {
     formData.value.imageFile = file
-    localImagePreview.value = URL.createObjectURL(file) // จำลองภาพขึ้นมาแสดงผลทันที
+    localImagePreview.value = URL.createObjectURL(file) 
   } else {
     formData.value.imageFile = null
     localImagePreview.value = null
@@ -338,12 +335,13 @@ const submitMonth = async () => {
   try {
     let finalImageId = formData.value.image_id;
 
-    // 🟢 3. ถ้ามีการเลือกไฟล์รูปใหม่ ให้อัปโหลดก่อน
     if (formData.value.imageFile) {
       const uploadData = new FormData();
-      uploadData.append('featuredImage', formData.value.imageFile); // ยืม API เดิมของทัวร์มาใช้
+      uploadData.append('featuredImage', formData.value.imageFile); 
       
-      const uploadRes = await api.post('/upload-tour-assets', uploadData, {
+      // 🟢 ส่ง route ผ่าน params
+      const uploadRes = await api.post('', uploadData, {
+        params: { route: 'upload-tour-assets' },
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -352,7 +350,6 @@ const submitMonth = async () => {
       }
     }
 
-    // 🟢 4. เตรียมข้อมูลส่งไปที่ API (ผูกเข้ากับ ACF category_thumbnail)
     const payload = {
       name: formData.value.name,
       slug: formData.value.slug.toLowerCase().replace(/\s+/g, '-'),
@@ -366,15 +363,21 @@ const submitMonth = async () => {
 
     let response
     if (isEditMode.value) {
-      response = await api.post(`/taxonomy-terms/month/${editId.value}`, payload)
+      // 🟢 ส่ง route ผ่าน params (แก้ไข)
+      response = await api.post('', payload, { 
+        params: { route: `taxonomy-terms/month/${editId.value}` } 
+      })
     } else {
-      response = await api.post('/taxonomy-terms/month', payload)
+      // 🟢 ส่ง route ผ่าน params (เพิ่มใหม่)
+      response = await api.post('', payload, { 
+        params: { route: 'taxonomy-terms/month' } 
+      })
     }
 
     if (response.data && response.data.success) {
       showToast(isEditMode.value ? 'อัปเดตข้อมูลสำเร็จ!' : 'เพิ่มข้อมูลสำเร็จ!', 'success')
       await fetchMonths()
-      setTimeout(() => { resetForm() }, 500)
+      resetForm()
     } else {
       showToast(response.data.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error')
     }
@@ -400,7 +403,11 @@ const executeDelete = async () => {
   isDeleting.value = true
 
   try {
-    const response = await api.delete(`/taxonomy-terms/month/${itemToDelete.value.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.delete('', { 
+      params: { route: `taxonomy-terms/month/${itemToDelete.value.id}` } 
+    })
+    
     if (response.data && response.data.success) {
       showToast('ลบข้อมูลสำเร็จ!', 'success')
       fetchMonths()
@@ -424,7 +431,10 @@ const viewTours = async (monthItem) => {
   toursInMonth.value = []
 
   try {
-    const response = await api.get(`/taxonomy-tours/month/${monthItem.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.get('', { 
+      params: { route: `taxonomy-tours/month/${monthItem.id}` } 
+    })
     if (Array.isArray(response.data)) {
       toursInMonth.value = response.data
     }
@@ -444,177 +454,137 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; }
+/* 🟢 บังคับ Box Model ป้องกันฟอร์มล้นกรอบ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 .admin-page-container {
   --color-primary: #cc0000;
   --color-secondary: #1a1a1a;
-  --color-bg: #f4f6f8;
+  --color-success: #16a34a;
+  --color-bg: #f8fafc;
   --color-border: #e2e8f0;
-  --color-text: #333333;
-  --color-text-muted: #64748b;
-  --font-family: 'Kanit', sans-serif;
-  font-family: var(--font-family);
+  --color-text: #334155;
+  font-family: 'Kanit', sans-serif;
   background-color: var(--color-bg);
-  color: var(--color-text);
   min-height: 100vh;
   padding: 30px;
-  max-width: 1000px;
+  max-width: 1200px; /* ขยายความกว้างให้ตรงกับหน้าอื่น */
   margin: 0 auto;
 }
 
-/* Header */
-.page-header { margin-bottom: 25px; border-bottom: 2px solid var(--color-primary); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-.page-title { font-size: 1.8rem; font-weight: 600; color: var(--color-secondary); display: flex; align-items: center; gap: 10px; margin: 0; }
-.page-subtitle { color: var(--color-text-muted); margin: 8px 0 0; font-weight: 300; }
+/* 🟢 Header */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--color-primary); padding-bottom: 15px; }
+.page-title { font-size: 1.8rem; font-weight: 600; color: var(--color-secondary); margin: 0; display: flex; align-items: center; gap: 10px;}
+.page-subtitle { color: #64748b; margin: 5px 0 0 0; font-weight: 300;}
 .header-actions { display: flex; gap: 10px; }
 
-/* Add/Edit Form */
-.add-form-card { background: #ffffff; border-radius: 12px; padding: 25px; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); margin-bottom: 25px; transition: all 0.3s; }
-.edit-mode-card { border-left-color: #d97706; background-color: #fffbeb; }
-.form-title { margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; color: var(--color-secondary); }
+/* 🟢 Buttons */
+.btn { font-family: 'Kanit', sans-serif; border: none; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; padding: 10px 20px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-primary { background: var(--color-primary); color: white; box-shadow: 0 4px 6px rgba(204,0,0,0.15); }
+.btn-primary:hover:not(:disabled) { background: #a30000; transform: translateY(-1px); }
+.btn-cancel { background: #64748b !important; box-shadow: none; }
+.btn-cancel:hover { background: #475569 !important; }
+.btn-success { background: var(--color-success); color: white; }
+.btn-success:hover:not(:disabled) { background: #15803d; }
+.btn-danger { background: #dc2626; color: white; }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-outline-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; }
+.btn-outline-secondary:hover:not(:disabled) { background: #f8fafc; border-color: #94a3b8; }
+.btn-icon { background: white; border: 1px solid #cbd5e1; width: 34px; height: 34px; padding: 0; border-radius: 8px; }
+.btn-edit:hover { background: #f0fdf4; border-color: #16a34a; color: #16a34a;}
+.btn-delete:hover { background: #fef2f2; border-color: #dc2626; color: #dc2626;}
+
+/* 🟢 Form Card */
+.add-form-card { background: white; border-radius: 12px; padding: 30px; border: 1px solid var(--color-border); border-top: 4px solid var(--color-primary); margin-bottom: 25px; }
+.edit-mode-card { border-top-color: #3b82f6; }
+.form-title { font-size: 1.2rem; font-weight: 600; color: var(--color-secondary); margin: 0 0 20px 0; }
+
+/* 🟢 Form Grid & Control (อัปเกรดให้เหมือน Destinations ไม่ทับซ้อน) */
 .form-grid { 
   display: grid; 
   grid-template-columns: repeat(2, 1fr); 
-  gap: 20px; /* เพิ่มระยะห่างระหว่างคอลัมน์และแถว */
+  gap: 24px; 
 }
 .form-group { 
   display: flex; 
   flex-direction: column; 
-  gap: 10px; /* เพิ่มระยะห่างระหว่าง Label กับ Input */
+  gap: 8px; 
+  width: 100%;
+  margin-bottom: 15px;
 }
 .full-width { grid-column: 1 / -1; }
-.hidden-input { 
-  display: none; /* ซ่อน input แบบดั้งเดิม */
-}
-.custom-upload-box {
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  background-color: #f8fafc;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  position: relative;
-}
-.custom-upload-box:hover {
-  border-color: var(--color-primary);
-  background-color: #ffffff;
-}
-.custom-upload-box.has-preview {
-  border: 2px solid #e2e8f0; /* ถ้ามีรูปแล้วให้เปลี่ยนเป็นเส้นทึบ */
-}
-.upload-label-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 220px; /* ความสูงของกล่องอัปโหลด */
-  cursor: pointer;
-  position: relative;
-  margin: 0;
-}
-.upload-placeholder {
-  text-align: center;
-  color: #64748b;
-  padding: 30px;
-}
-.upload-icon {
-  font-size: 3rem;
-  margin-bottom: 10px;
-  opacity: 0.7;
-}
-.upload-text {
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-.preview-full-img {
-  width: 100%;
-  height: 280px; /* ความสูงของรูปที่แสดง (ปรับให้เหมาะกับ 1200x628) */
-  object-fit: cover;
-  display: block;
-}
-.hover-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 500;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  gap: 8px;
-}
-.custom-upload-box:hover .hover-overlay {
-  opacity: 1; /* โชว์ข้อความ "เปลี่ยนรูปภาพ" ตอนเอาเมาส์ชี้ */
-}
-.form-group label { font-weight: 500; font-size: 0.95rem; }
-.form-control { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-family: var(--font-family); outline: none; transition: border-color 0.2s; width: 100%; resize: vertical; }
+.form-group label { font-weight: 500; font-size: 0.95rem; color: #334155; }
 .form-control { 
-  padding: 12px 16px; /* ขยาย Input ให้ดูหนา พรีเมียมขึ้น */
+  width: 100%; 
+  padding: 12px 16px; 
+  border: 1px solid #cbd5e1; 
+  border-radius: 8px; 
+  font-family: 'Kanit', sans-serif; 
   font-size: 0.95rem; 
+  color: #1e293b;
+  background-color: #f8fafc; 
+  transition: all 0.25s ease-in-out; 
+  outline: none;
 }
-.text-danger { color: var(--color-primary); }
-.text-success { color: #16a34a; }
-.form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 15px; border-top: 1px dashed var(--color-border); padding-top: 15px; }
-.action-buttons { display: flex; gap: 10px; }
+.form-control:focus { background-color: #ffffff; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.15); }
+textarea.form-control { resize: vertical; min-height: 80px; }
+.text-danger { color: #dc2626; }
+.text-muted { color: #64748b; font-weight: 300; }
+.size-hint { font-size: 0.8rem; color: #64748b; font-weight: 300; margin-left: 8px; }
 
-/* Image Preview */
-.preview-img { max-width: 100px; max-height: 100px; border-radius: 6px; object-fit: cover; border: 1px solid var(--color-border); }
-.table-image-wrapper { width: 60px; height: 40px; margin: 0 auto; background: #f1f5f9; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e2e8f0; }
-.table-img { width: 100%; height: 100%; object-fit: cover; }
-.no-img { opacity: 0.5; font-size: 1.2rem; }
+/* 🟢 Image Upload Box */
+.custom-upload-box { width: 100%; position: relative; border: 2px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; transition: all 0.2s; overflow: hidden; min-height: 150px;}
+.custom-upload-box:hover { border-color: var(--color-primary); background: #fff5f5; }
+.hidden-input { position: absolute; width: 0; height: 0; opacity: 0; }
+.upload-label-area { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 150px; cursor: pointer; }
+.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #64748b; pointer-events: none;}
+.upload-icon { font-size: 2.5rem; opacity: 0.7; }
+.upload-text { font-weight: 500; }
+.preview-full-img { width: 100%; height: 100%; max-height: 250px; object-fit: contain; display: block; }
+.hover-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0; transition: 0.2s; font-weight: 500; pointer-events: none;}
+.custom-upload-box:hover .hover-overlay { opacity: 1; }
 
-/* Transitions */
-.slide-fade-enter-active { transition: all 0.3s ease-out; }
-.slide-fade-leave-active { transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1); }
-.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-10px); opacity: 0; }
+/* 🟢 SEO Section */
+.seo-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; }
+.seo-title { font-size: 1.1rem; font-weight: 600; color: #2563eb; margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;}
+.mt-4 { margin-top: 1.5rem !important; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
 
-/* States */
-.state-container { text-align: center; padding: 50px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e1; color: var(--color-text-muted); font-size: 1.1rem; }
-.error-text { color: var(--color-primary); border-color: #fca5a5; background: #fef2f2; }
+/* 🟢 State Container (Loading / Error / Empty) */
+.state-container { text-align: center; padding: 50px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b; font-size: 1.1rem; }
+.error-text { color: #cc0000; border-color: #fca5a5; background: #fef2f2; }
 
-/* Table */
-.table-card { background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid var(--color-border); }
-.table-responsive { overflow-x: auto; }
-.modern-table { width: 100%; border-collapse: collapse; min-width: 800px; text-align: left; }
-.modern-table th, .modern-table td { padding: 16px 10px; border-bottom: 1px solid var(--color-border); }
-.modern-table th { background-color: #f8fafc; font-weight: 600; color: var(--color-secondary); font-size: 0.95rem; text-transform: uppercase; }
-.text-center { text-align: center; }
-.font-bold { font-weight: 600; color: var(--color-text-muted); }
+/* 🟢 Table Styles */
+.table-card { background: white; border-radius: 12px; border: 1px solid var(--color-border); overflow: hidden; }
+.table-responsive { width: 100%; overflow-x: auto; }
+.modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.modern-table th { background: #f8fafc; padding: 14px; text-align: left; color: #334155; font-weight: 600; border-bottom: 2px solid #cbd5e1; font-size: 0.95rem;}
+.modern-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #475569; }
+.modern-table tbody tr:hover td { background: #f8fafc; }
 .highlight-row { background-color: #fef3c7 !important; }
+.card-footer { padding: 15px; border-top: 1px solid #e2e8f0; background-color: #f8fafc; }
 
-.description-cell { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-muted); font-size: 0.9rem; }
+.thumbnail-wrapper { width: 60px; height: 40px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; margin: 0 auto; background: #f1f5f9; display: flex; align-items: center; justify-content: center;}
+.table-img { width: 100%; height: 100%; object-fit: cover; }
+.no-img { font-size: 1rem; }
 
-/* Badges & Text */
-.badge-key { background-color: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 6px; font-weight: 400; font-size: 0.9rem; }
-.badge-count { background-color: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; border: 1px solid #bbf7d0; }
-.dest-name { font-weight: 500; color: var(--color-secondary); font-size: 1.05rem; }
+.item-name { font-weight: 600; color: var(--color-secondary); font-size: 1.05rem; }
+.item-en-name { font-size: 0.8rem; color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;}
+.description-cell { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem;}
 
-/* Action Buttons in Table */
-.action-flex { display: flex; justify-content: center; gap: 8px; }
-.btn-icon { background: transparent; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;}
-.btn-edit:hover { background: #fffbeb; border-color: #d97706; }
-.btn-delete:hover { background: #fef2f2; border-color: #dc2626; }
+.badge-count-btn { background-color: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; border: 1px solid #bbf7d0; cursor: pointer; transition: 0.2s; font-family: 'Kanit';}
+.badge-count-btn:hover:not(:disabled) { background-color: #dcfce7; transform: scale(1.05); }
+.badge-count-btn:disabled { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; cursor: default; transform: none;}
+.action-buttons { display: flex; gap: 8px; justify-content: center; }
 
-/* Buttons */
-.btn { font-family: var(--font-family); border: none; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px;}
-.btn-primary { background-color: var(--color-primary); color: #fff; }
-.btn-primary:hover { background-color: #a30000; }
-.btn-cancel { background-color: #475569; color: #fff; }
-.btn-success { background-color: #16a34a; color: #fff; }
-.btn-success:hover { background-color: #15803d; }
-.btn-danger { background-color: var(--color-primary); color: white; }
-.btn-danger:hover:not(:disabled) { background-color: #a30000; }
-.btn-outline-secondary { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
-.btn-outline-secondary:hover:not(:disabled) { background: #f1f5f9; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* Modal Styles */
+/* 🟢 Modal ดูรายการทัวร์ */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
 .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
-.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; margin: 0; }
+.modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--color-secondary); font-weight: 600; }
 .modal-body { padding: 20px; overflow-y: auto; }
 .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; transition: 0.2s; }
 .close-btn:hover { color: #cc0000; }
@@ -622,58 +592,55 @@ onMounted(() => {
 .tour-item { padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
 .tour-code { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
 .tour-title { flex: 1; font-size: 0.95rem; }
-.badge-count-btn { background-color: #f0fdf4; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; border: 1px solid #bbf7d0; cursor: pointer; transition: 0.2s; }
-.badge-count-btn:hover:not(:disabled) { background-color: #dcfce7; transform: scale(1.05); }
-.badge-count-btn:disabled { opacity: 0.5; cursor: default; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: auto;}
 .status-dot.publish { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
 .status-dot.draft { background: #cbd5e1; }
 
-/* TOAST NOTIFICATION */
-.custom-toast { position: fixed; top: 30px; right: 30px; z-index: 2000; display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-radius: 12px; font-weight: 500; font-family: var(--font-family); background: white; border-left: 5px solid; }
-.custom-toast.success { border-left-color: #16a34a; color: #15803d; }
-.custom-toast.error { border-left-color: var(--color-primary); color: var(--color-primary); }
-.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.toast-slide-enter-from { transform: translateX(100px); opacity: 0; }
-.toast-slide-leave-to { transform: translateY(-20px); opacity: 0; }
-
-/* CONFIRM DELETE MODAL */
-.confirm-modal { max-width: 400px; padding: 30px 25px; text-align: center; border-radius: 16px; }
-.confirm-icon-wrapper { width: 70px; height: 70px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; }
-.confirm-title { margin: 0 0 10px; font-size: 1.4rem; color: var(--color-secondary); }
-.confirm-text { color: var(--color-text-muted); margin-bottom: 25px; line-height: 1.6; }
-.confirm-actions { display: flex; gap: 15px; justify-content: center; }
-.confirm-actions .btn { min-width: 120px; }
+/* 🟢 Confirm Delete Modal */
+.confirm-modal { max-width: 400px; padding: 30px; text-align: center; border-top: 5px solid #dc2626; border-radius: 12px;}
+.confirm-icon-wrapper { width: 60px; height: 60px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }
+.confirm-icon { font-size: 1.8rem; }
+.confirm-title { margin: 0 0 10px 0; font-size: 1.3rem; color: var(--color-secondary); }
+.confirm-text { color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; }
 .text-sm { font-size: 0.85rem; }
+.confirm-actions { display: flex; justify-content: center; gap: 10px; }
 
-/* SEO Section Styles */
-.mt-4 { margin-top: 1.5rem; }
-.seo-section { background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; }
-.seo-heading { margin-top: 0; margin-bottom: 15px; font-size: 1.05rem; color: #334155; display: flex; align-items: center; gap: 8px; }
-.seo-badge { background-color: #0f172a; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: 600; }
+/* 🟢 Toast */
+.custom-toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; background: white; display: flex; align-items: center; gap: 10px; z-index: 1000; font-weight: 500; border-left: 4px solid; }
+.custom-toast.success { border-left-color: #16a34a; color: #166534; background: #f0fdf4;}
+.custom-toast.error { border-left-color: #dc2626; color: #991b1b; background: #fef2f2;}
+.toast-icon { font-size: 1.2rem; }
 
-/* 🟢 Size Hint (แนะนำขนาดรูป) */
-.size-hint {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 400;
-  margin-left: 10px;
-  background-color: #f8fafc;
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px dashed #cbd5e1;
-  display: inline-block;
-}
+/* 🟢 Transitions */
+.slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.3s ease; }
+.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-20px); opacity: 0; }
+.toast-slide-enter-active, .toast-slide-leave-active { transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+.toast-slide-enter-from, .toast-slide-leave-to { opacity: 0; transform: translateX(50px); }
+
+/* 🟢 Responsive Adjustments */
 @media (max-width: 768px) {
-  .page-header { flex-direction: column; align-items: flex-start; }
-  .header-actions { width: 100%; display: flex; flex-direction: column; }
-  .btn { width: 100%; }
+  .admin-page-container { padding: 15px; }
+  .form-grid { grid-template-columns: 1fr; gap: 15px; }
+  .seo-section { padding: 20px 15px; }
+  
+  /* ตารางแบบ Card บนมือถือ */
+  .table-responsive { overflow-x: hidden; }
   .modern-table { min-width: 100%; }
   .modern-table thead { display: none; }
-  .modern-table tbody tr { display: block; border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: 15px; background-color: #fff; padding: 10px; }
+  .modern-table tbody tr { display: block; border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: 15px; background-color: #fff; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
   .modern-table td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 12px 5px; text-align: right !important; }
   .modern-table td:last-child { border-bottom: none; }
-  .modern-table td::before { content: attr(data-label); font-weight: 600; color: var(--color-text-muted); font-size: 0.9rem; text-align: left; }
+  .modern-table td::before { content: attr(data-label); font-weight: 600; color: #64748b; font-size: 0.9rem; text-align: left; }
   .description-cell { max-width: none; white-space: normal; text-align: right; }
+}
+
+@media (max-width: 576px) {
+  .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .header-actions .btn { width: 100%; justify-content: center; padding: 10px; font-size: 0.9rem;}
+  .form-actions { flex-direction: column-reverse; }
+  .form-actions .btn { width: 100%; }
+  .confirm-actions { flex-direction: column-reverse; }
+  .confirm-actions .btn { width: 100%; }
 }
 </style>

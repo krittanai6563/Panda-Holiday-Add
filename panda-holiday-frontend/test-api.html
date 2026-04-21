@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ทดสอบ API</title>
+</head>
+<body style="padding: 20px; font-family: sans-serif;">
+    <h2>ทดสอบดึงข้อมูลสายการบินจาก api.php</h2>
+    <button onclick="testAPI()" style="padding: 10px 20px; background: #cc0000; color: white; border: none; cursor: pointer;">
+        คลิกเพื่อดึงข้อมูล
+    </button>
+    <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border: 1px solid #ccc;">
+        <strong>ผลลัพธ์ที่ได้จากเซิร์ฟเวอร์:</strong>
+        <pre id="result" style="white-space: pre-wrap; word-break: break-all;">รอการคลิก...</pre>
+    </div>
+
+    <script>
+        function testAPI() {
+            document.getElementById('result').innerText = 'กำลังโหลดข้อมูลจากเซิร์ฟเวอร์...';
+            
+            fetch('https://tour.panda.co.th/api.php?route=airlines')
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP Status: ' + response.status);
+                    return response.text(); // อ่านค่ามาเป็น Text ล้วนๆ เพื่อดูว่ามันแอบส่ง HTML แจ้งเตือนอะไรมาไหม
+                })
+                .then(data => {
+                    document.getElementById('result').innerText = data;
+                })
+                .catch(error => {
+                    document.getElementById('result').innerText = 'เกิดข้อผิดพลาด: ' + error.message;
+                });
+        }
+    </script>
+</body>
+</html>

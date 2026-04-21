@@ -422,6 +422,7 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
+
 /* ---------------------------------------------------
    HEADER SECTION
 --------------------------------------------------- */
@@ -623,6 +624,7 @@ onMounted(async () => {
 .tour-display-area {
   display: grid;
   gap: 25px;
+  
 }
 
 .tour-display-area.grid-mode {

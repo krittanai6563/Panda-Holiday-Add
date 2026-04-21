@@ -96,7 +96,17 @@
       </div>
     </transition>
 
-    <div class="table-card shadow-sm">
+    <div v-if="isLoading" class="state-container">
+      <span class="loading-spinner">⏳</span> กำลังดึงข้อมูลเทศกาล...
+    </div>
+    <div v-else-if="errorMessage" class="state-container error-text">
+      ❌ {{ errorMessage }}
+    </div>
+    <div v-else-if="festivals.length === 0" class="state-container">
+      📭 ยังไม่มีข้อมูลเทศกาลในระบบ
+    </div>
+
+    <div v-else class="table-card shadow-sm">
       <div class="table-responsive">
         <table class="modern-table">
           <thead>
@@ -110,12 +120,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="isLoading">
-              <td colspan="6" class="text-center p-5 text-muted">⏳ กำลังโหลดข้อมูล...</td>
-            </tr>
-            <tr v-else-if="festivals.length === 0">
-              <td colspan="6" class="text-center p-5 text-muted">📭 ยังไม่มีข้อมูลเทศกาล</td>
-            </tr>
             <tr v-for="(festItem, index) in festivals" :key="festItem.id" :class="{ 'highlight-row': isEditMode && editId === festItem.id }">
               <td class="text-center font-bold">{{ index + 1 }}</td>
               
@@ -150,21 +154,25 @@
           </tbody>
         </table>
       </div>
+      <div class="card-footer">
+        <small class="text-muted">ดึงข้อมูลสำเร็จทั้งหมด {{ festivals.length }} รายการ</small>
+      </div>
     </div>
 
-    <transition name="fade">
+    <transition name="slide-fade">
       <div v-if="showToursModal" class="modal-overlay" @click.self="showToursModal = false">
-        <div class="modal-content tours-modal shadow-lg">
-          <div class="modal-header">
-            <h3>รายการทัวร์ใน "{{ selectedFestival?.name }}"</h3>
-            <button @click="showToursModal = false" class="btn-close">✕</button>
-          </div>
-          <div class="modal-body p-0">
+        <div class="modal-content shadow-lg">
+          <header class="modal-header">
+            <h3>รายการทัวร์ในเทศกาล: {{ selectedFestival?.name }}</h3>
+            <button @click="showToursModal = false" class="close-btn">&times;</button>
+          </header>
+          <div class="modal-body">
             <div v-if="isFetchingTours" class="text-center p-4">⏳ กำลังโหลดรายการทัวร์...</div>
-            <ul class="tour-list" v-else-if="toursInFestival.length > 0">
-              <li v-for="tour in toursInFestival" :key="tour.id" class="tour-list-item">
+            <ul v-else-if="toursInFestival.length > 0" class="tour-list">
+              <li v-for="tour in toursInFestival" :key="tour.id" class="tour-item">
+                <span class="tour-code">{{ tour.code || 'NO-CODE' }}</span>
                 <span class="tour-title">{{ tour.title }}</span>
-                <span class="status-badge" :class="tour.status === 'publish' ? 'publish' : 'draft'"></span>
+                <span :class="'status-dot ' + (tour.status === 'publish' ? 'publish' : 'draft')"></span>
               </li>
             </ul>
             <p v-else class="text-center p-4 text-muted">ยังไม่มีทัวร์ที่เชื่อมกับเทศกาลนี้</p>
@@ -230,11 +238,12 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-// ใช้ API Endpoint สำหรับ WP
-const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
+// 🟢 แก้ไข Axios (ลบ ?route= ออก และเปลี่ยนชื่อเป็น api)
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php`, 
   timeout: 120000
 })
+
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, message, type }
   setTimeout(() => { toast.value.show = false }, 3000)
@@ -242,12 +251,15 @@ const showToast = (message, type = 'success') => {
 
 const fetchFestivals = async () => {
   isLoading.value = true
+  errorMessage.value = ''
   try {
-    const response = await api.get('/taxonomy-terms/festival')
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.get('', { params: { route: 'taxonomy-terms/festival' } })
     if (response.data && response.data.success) {
       festivals.value = response.data.items || []
     }
   } catch (error) {
+    errorMessage.value = 'ไม่สามารถดึงข้อมูลได้ โปรดลองอีกครั้ง'
     showToast('ไม่สามารถดึงข้อมูลได้', 'error')
   } finally {
     isLoading.value = false
@@ -298,9 +310,13 @@ const submitFestival = async () => {
     if (formData.value.imageFile) {
       const uploadData = new FormData();
       uploadData.append('featuredImage', formData.value.imageFile);
-      const uploadRes = await api.post('/upload-tour-assets', uploadData, {
+      
+      // 🟢 ส่ง route ผ่าน params
+      const uploadRes = await api.post('', uploadData, {
+        params: { route: 'upload-tour-assets' },
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
       if (uploadRes.data && uploadRes.data.featuredImage) {
         finalImageId = uploadRes.data.featuredImage.attachment_id;
       }
@@ -317,8 +333,9 @@ const submitFestival = async () => {
       category_thumbnail: finalImageId 
     }
 
-    const endpoint = isEditMode.value ? `/taxonomy-terms/festival/${editId.value}` : '/taxonomy-terms/festival'
-    const response = await api.post(endpoint, payload)
+    // 🟢 ส่ง route ผ่าน params
+    const routeName = isEditMode.value ? `taxonomy-terms/festival/${editId.value}` : 'taxonomy-terms/festival';
+    const response = await api.post('', payload, { params: { route: routeName } })
 
     if (response.data && response.data.success) {
       showToast(isEditMode.value ? 'อัปเดตข้อมูลสำเร็จ!' : 'เพิ่มข้อมูลสำเร็จ!')
@@ -346,7 +363,11 @@ const executeDelete = async () => {
   if (!itemToDelete.value) return
   isDeleting.value = true
   try {
-    const response = await api.delete(`/taxonomy-terms/festival/${itemToDelete.value.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.delete('', { 
+      params: { route: `taxonomy-terms/festival/${itemToDelete.value.id}` } 
+    })
+
     if (response.data && response.data.success) {
       showToast('ลบข้อมูลสำเร็จ!')
       fetchFestivals()
@@ -364,7 +385,10 @@ const viewTours = async (festItem) => {
   showToursModal.value = true
   isFetchingTours.value = true
   try {
-    const response = await api.get(`/taxonomy-tours/festival/${festItem.id}`)
+    // 🟢 ส่ง route ผ่าน params
+    const response = await api.get('', { 
+      params: { route: `taxonomy-tours/festival/${festItem.id}` } 
+    })
     if (Array.isArray(response.data)) toursInFestival.value = response.data
   } catch (error) {
     showToast('ดึงข้อมูลทัวร์ไม่สำเร็จ', 'error')
@@ -379,7 +403,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* CSS ยกมาจากหน้า Months.vue เพื่อให้ดีไซน์เหมือนกัน 100% */
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
 .admin-page-container {
@@ -419,6 +442,25 @@ onMounted(() => {
 .seo-section { background: #f1f5f9; padding: 20px; border-radius: 12px; }
 .seo-heading { margin-bottom: 15px; color: #2563eb; }
 
+/* 🟢 State Container (Loading / Error / Empty) */
+.state-container { 
+  text-align: center; 
+  padding: 50px; 
+  background: #fff; 
+  border-radius: 12px; 
+  border: 1px dashed #cbd5e1; 
+  color: #64748b; 
+  font-size: 1.1rem; 
+  margin-bottom: 25px; 
+}
+.error-text { 
+  color: #cc0000; 
+  border-color: #fca5a5; 
+  background: #fef2f2; 
+}
+
+/* 🟢 Table Styles */
+.table-card { background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid var(--color-border); }
 .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
 .modern-table th { background: #f8fafc; padding: 14px; text-align: left; color: #334155; font-weight: 600; border-bottom: 2px solid #cbd5e1; font-size: 0.95rem;}
 .modern-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #475569; }
@@ -434,10 +476,14 @@ onMounted(() => {
 .seo-tag.success { background: #dcfce7; color: #166534; }
 .seo-tag.warning { background: #fef3c7; color: #92400e; }
 
-.action-flex { display: flex; gap: 8px; }
+.action-flex { display: flex; gap: 8px; justify-content: center; }
 .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #cbd5e1; background: white; cursor: pointer; }
 .btn-edit:hover { background: #eff6ff; border-color: #3b82f6; }
 .btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
+
+/* 🟢 Row Highlight & Footer */
+.highlight-row { background-color: #fef3c7 !important; }
+.card-footer { padding: 15px; border-top: 1px solid #e2e8f0; background-color: #f8fafc; }
 
 /* Toast */
 .custom-toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 10px; background: white; display: flex; align-items: center; gap: 10px; z-index: 1000; border-left: 5px solid; }
@@ -445,15 +491,23 @@ onMounted(() => {
 .custom-toast.error { border-left-color: #dc2626; }
 
 /* Modal Styles */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
-.modal-content { background: white; border-radius: 15px; width: 90%; max-width: 500px; overflow: hidden; }
-.modal-header { padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+/* 🟢 Modal Styles (ดีไซน์เดียวกับหน้า Months) */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
+.modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; margin: 0; }
+.modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--color-secondary); font-weight: 600; }
+.modal-body { padding: 20px; overflow-y: auto; }
+.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; transition: 0.2s; }
+.close-btn:hover { color: #cc0000; }
 
-.tour-list { list-style: none; padding: 0; }
-.tour-list-item { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-.status-badge { width: 10px; height: 10px; border-radius: 50%; }
-.status-badge.publish { background: #16a34a; }
-.status-badge.draft { background: #d97706; }
+/* 🟢 Tour List ใน Modal */
+.tour-list { list-style: none; padding: 0; margin: 0; }
+.tour-item { padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+.tour-code { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tour-title { flex: 1; font-size: 0.95rem; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: auto;}
+.status-dot.publish { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
+.status-dot.draft { background: #cbd5e1; }
 
 .confirm-modal { padding: 30px; text-align: center; }
 .confirm-icon-wrapper { width: 60px; height: 60px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 30px; }
