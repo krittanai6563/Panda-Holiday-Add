@@ -180,9 +180,9 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-const api = axios.create({
-  baseURL: 'http://localhost:3005/api',
-  timeout: 30000
+const secureApi = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
+  timeout: 120000
 })
 
 const showToast = (message, type = 'success') => {

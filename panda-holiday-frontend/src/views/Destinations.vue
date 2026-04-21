@@ -245,9 +245,9 @@ const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
 // 🟢 ใช้ API เส้นหลักของระบบ
-const api = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1',
-  timeout: 60000
+const secureApi = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
+  timeout: 120000
 })
 
 const showToast = (message, type = 'success') => {

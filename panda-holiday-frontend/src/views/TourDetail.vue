@@ -382,7 +382,7 @@ const publicApi = axios.create({
 
 // 2. API สำหรับอัปโหลดรูปและอัปเดตข้อมูล (วิ่งไปหา Node.js บน Render)
 const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
   timeout: 120000
 })
 // ---------------------------------------------------------------------

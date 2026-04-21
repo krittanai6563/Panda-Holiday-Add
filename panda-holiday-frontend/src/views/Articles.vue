@@ -160,11 +160,11 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 // 🟢 เปลี่ยนเป็น URL เว็บ WordPress ของคุณ
-const secureApi = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1', 
-  timeout: 120000
+// ✅ เปลี่ยนมาใช้ Proxy ผ่านไฟล์ api.php
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`,
+  timeout: 60000
 })
-
 const router = useRouter()
 const articles = ref([])
 const categories = ref([])

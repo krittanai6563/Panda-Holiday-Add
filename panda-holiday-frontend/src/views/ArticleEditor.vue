@@ -283,7 +283,7 @@ import Papa from 'papaparse'
 import axios from 'axios'
 
 const secureApi = axios.create({
-  baseURL: 'https://dev1.blupaperdev.com/wp-json/blupaper/v1', 
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
   timeout: 120000
 })
 const route = useRoute()

@@ -256,7 +256,7 @@ const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
 const secureApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  baseURL: `${import.meta.env.VITE_API_URL}/api.php?route=`, // ✅ เปลี่ยนเป็น PHP Proxy
   timeout: 120000
 })
 
