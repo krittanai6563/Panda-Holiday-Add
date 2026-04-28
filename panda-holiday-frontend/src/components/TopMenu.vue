@@ -67,7 +67,7 @@
 
         <li class="menu-label mt-4">DATA MANAGEMENT</li>
 
-        <li>
+        <!-- <li>
           <router-link to="/destinations" class="nav-link" @click="closeMobileMenu">
             <span class="menu-icon-box">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -76,9 +76,9 @@
             </span>
             <span class="menu-text">จุดหมายปลายทาง</span>
           </router-link>
-        </li>
+        </li> -->
 
-        <li>
+        <!-- <li>
           <router-link to="/festivals" class="nav-link" @click="closeMobileMenu">
             <span class="menu-icon-box">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -87,7 +87,7 @@
             </span>
             <span class="menu-text">เทศกาล</span>
           </router-link>
-        </li>
+        </li> -->
 
         <li>
           <router-link to="/months" class="nav-link" @click="closeMobileMenu">

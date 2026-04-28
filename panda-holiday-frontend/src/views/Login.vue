@@ -101,7 +101,8 @@ const handleLogin = async () => {
   errorMessage.value = ''
 
   try {
-    // จำลองการตรวจสอบรหัสผ่าน
+    
+  
     if (username.value === 'admin' && password.value === 'admin') {
       localStorage.setItem('admin_token', 'logged_in_token_xyz')
       

@@ -171,7 +171,6 @@ const formData = ref({
   imageFile: null
 })
 
-// พรีวิวโลโก้ (ไฟล์ที่เลือกสดๆ หรือ URL เดิม)
 const localImagePreview = ref(null)
 const previewImage = computed(() => localImagePreview.value || formData.value.airline_logo || null)
 
@@ -180,9 +179,9 @@ const showConfirmModal = ref(false)
 const itemToDelete = ref(null)
 const isDeleting = ref(false)
 
-// 🟢 แก้ไข Axios (เรียกใช้ api และต่อ route ผ่าน params)
+// 🟢 1. แก้ไข Base URL ให้วิ่งตรงไปที่ WordPress API ของเว็บใหม่
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api.php`, 
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
   timeout: 120000
 })
 
@@ -191,11 +190,12 @@ const showToast = (message, type = 'success') => {
   setTimeout(() => { toast.value.show = false }, 3000)
 }
 
+// 🟢 2. แก้ไขวิธีเรียก API ดึงข้อมูล
 const fetchAirlines = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await api.get('', { params: { route: 'airlines' } })
+    const response = await api.get('/airlines')
     if (Array.isArray(response.data)) {
       airlines.value = response.data
     } else {
@@ -239,21 +239,21 @@ const onImageChange = (e) => {
   }
 }
 
+// 🟢 3. แก้ไขวิธีเรียก API เพิ่ม/อัปเดตข้อมูล และอัปโหลดโลโก้
 const submitAirline = async () => {
   if (!formData.value.airline_name || !formData.value.airline_key) return
   isSubmitting.value = true
 
   try {
-    let finalLogoId = null
+    let finalLogoId = formData.value.airline_logo // เก็บโลโก้เดิมไว้ก่อนเผื่อไม่ได้เปลี่ยน
 
-    // 1. อัปโหลดโลโก้ใหม่เข้าระบบ (ถ้ามี)
+    // อัปโหลดโลโก้ใหม่เข้าระบบ (ถ้ามีการเลือกรูปใหม่)
     if (formData.value.imageFile) {
       const webpLogo = await convertToWebP(formData.value.imageFile, 0.8)
       const uploadData = new FormData()
       uploadData.append('featuredImage', webpLogo) 
       
-      const uploadRes = await api.post('', uploadData, {
-        params: { route: 'upload-tour-assets' },
+      const uploadRes = await api.post('/upload-tour-assets', uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       if (uploadRes.data?.featuredImage) {
@@ -267,7 +267,7 @@ const submitAirline = async () => {
       airline_logo: finalLogoId
     }
 
-    const response = await api.post('', payload, { params: { route: 'add-airline' } })
+    const response = await api.post('/add-airline', payload)
 
     if (response.data?.success) {
       showToast(isEditMode.value ? 'อัปเดตสายการบินสำเร็จ!' : 'เพิ่มสายการบินสำเร็จ!')
@@ -277,7 +277,8 @@ const submitAirline = async () => {
       showToast(response.data?.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error')
     }
   } catch (error) {
-    showToast('เกิดข้อผิดพลาดในการบันทึก', 'error')
+    console.error(error)
+    showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error')
   } finally {
     isSubmitting.value = false
   }
@@ -325,11 +326,13 @@ const convertToWebP = (file, quality = 0.8) => {
   })
 }
 
+// 🟢 4. แก้ไขวิธีเรียก API ลบข้อมูล
 const executeDelete = async () => {
   if (!itemToDelete.value) return
   isDeleting.value = true
   try {
-    const response = await api.post('', { airline_key: itemToDelete.value.airline_key }, { params: { route: 'delete-airline' } })
+    const response = await api.post('/delete-airline', { airline_key: itemToDelete.value.airline_key })
+    
     if (response.data?.success) {
       showToast('ลบสายการบินสำเร็จ!')
       await fetchAirlines()
@@ -337,7 +340,9 @@ const executeDelete = async () => {
       showToast(response.data?.message || 'ไม่สามารถลบข้อมูลได้', 'error')
     }
   } catch (error) {
-    showToast('ระบบ Backend ยังไม่รองรับฟังก์ชันการลบ โปรดเพิ่ม API /delete-airline', 'error')
+    console.error(error)
+    // เปลี่ยนข้อความแจ้งเตือนให้สะท้อนปัญหาจริง ไม่สับขาหลอก
+    showToast('ไม่สามารถเชื่อมต่อเพื่อลบข้อมูลได้', 'error')
   } finally {
     isDeleting.value = false
     showConfirmModal.value = false

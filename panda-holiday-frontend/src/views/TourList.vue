@@ -48,6 +48,16 @@
             </div>
 
             <div class="form-group">
+  <label>ระยะเวลา (วัน / คืน) <span class="required">*</span></label>
+  <div class="auto-calc-group" style="display: flex; gap: 10px; align-items: center;">
+    <input type="number" v-model="formData.trip_days" placeholder="ระบุวัน" class="form-control text-center" min="1" required />
+    <span>วัน</span>
+    <input type="number" v-model="formData.trip_nights" placeholder="ระบุคืน" class="form-control text-center" min="0" required />
+    <span>คืน</span>
+  </div>
+</div>
+
+            <div class="form-group">
               <label>สถานะการแสดงผล (Status) <span class="required">*</span></label>
               <select v-model="formData.status" class="form-control form-select status-select" :class="formData.status">
                 <option value="publish">เผยแพร่ (Publish)</option>
@@ -146,12 +156,12 @@
               class="modern-multiselect" />
           </div>
 
-          <div class="form-group">
-            <label>เดือนที่เดินทาง (Month Categories)</label>
-            <Multiselect v-model="formData.month_ids" :options="monthsList" mode="tags" :searchable="true"
-              valueProp="id" label="name" placeholder="พิมพ์เพื่อค้นหาเดือน..." :disabled="loadingMonths"
-              class="modern-multiselect" />
-          </div>
+         <div class="form-group">
+  <label>เดือนที่เดินทาง (Month Categories) <span style="color: #d97706; font-size: 0.85rem;">(เลือกอัตโนมัติ)</span></label>
+  <Multiselect v-model="formData.month_ids" :options="monthsList" mode="tags" :searchable="false"
+    valueProp="id" label="name" placeholder="ระบบจะคำนวณให้อัตโนมัติตามวันที่เดินทาง..." :disabled="true"
+    class="modern-multiselect" />
+</div>
         </div>
       </section>
 
@@ -188,29 +198,30 @@
       </div>
 
       <div class="form-grid grid-col-2">
-        <div class="form-group">
-          <label>วันที่ไป (Start Date)</label>
-          <input type="date" v-model="round.start_date" :min="today" class="form-control"
-            @change="round.end_date = ''" />
-        </div>
-        <div class="form-group">
-          <label>วันที่กลับ (End Date)</label>
-          <input type="date" v-model="round.end_date" :min="getNextDay(round.start_date)" class="form-control"
-            :disabled="!round.start_date" />
-        </div>
+  <div class="form-group">
+    <label>วันที่ไป (Start Date)</label>
+    <input type="date" v-model="round.start_date" :min="today" class="form-control"
+      @change="autoCalculateEndDate(roundIndex)" />
+  </div>
+  
+  <div class="form-group">
+    <label>วันที่กลับ (End Date)</label>
+    <input type="date" v-model="round.end_date" class="form-control readonly-input" 
+      readonly placeholder="คำนวณอัตโนมัติ" />
+  </div>
 
-        <div class="form-group">
-          <label>จำนวนรับได้สูงสุด (Max Pax.)</label>
-          <input type="number" v-model="round.max_pax" placeholder="เช่น 20 หรือ 30" class="form-control" min="1" />
-        </div>
+  <div class="form-group">
+    <label>จำนวนรับได้สูงสุด (Max Pax.)</label>
+    <input type="number" v-model="round.max_pax" placeholder="เช่น 20 หรือ 30" class="form-control" min="1" />
+  </div>
 
-        <div class="form-group">
-          <label>วัน / คืน (คำนวณอัตโนมัติ)</label>
-          <input type="text" :value="`${calculateDaysAndNights(round.start_date, round.end_date).days} วัน ${calculateDaysAndNights(round.start_date, round.end_date).nights} คืน`" readonly class="form-control readonly-input" />
-        </div>
-
-     
-      </div>
+  <div class="form-group">
+    <label>ระยะเวลา (อิงจากข้อมูลหลัก)</label>
+    <input type="text" 
+      :value="formData.trip_days ? `${formData.trip_days} วัน ${formData.trip_nights} คืน` : '-'" 
+      readonly class="form-control readonly-input" />
+  </div>
+</div>
 
       <div class="price-tiers-list">
         <label class="inner-label">ตารางราคา</label>
@@ -582,27 +593,43 @@
         <div class="custom-modal-box progress-modal-box shadow-lg">
           <div class="modal-body text-center">
             
-            <div class="spinner-container">
-              <div class="cloud-upload-icon">☁️</div>
-              <div class="loading-ring"></div>
-            </div>
-            
-            <h3 class="progress-title mt-4">กำลังนำเข้าข้อมูลทัวร์...</h3>
-            <p class="progress-status-text">{{ importProgress }}</p>
+            <template v-if="!isImportComplete">
+              <div class="spinner-container">
+                <div class="cloud-upload-icon">☁️</div>
+                <div class="loading-ring"></div>
+              </div>
+              
+              <h3 class="progress-title mt-4">กำลังนำเข้าข้อมูลทัวร์...</h3>
+              <p class="progress-status-text">{{ importProgress }}</p>
 
-            <div class="progress-bar-container">
-              <div class="progress-bar-fill" :style="{ width: importPercentage + '%' }"></div>
-            </div>
-            
-            <div class="progress-percentage">
-              <strong>{{ importPercentage }}%</strong>
-            </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" :style="{ width: importPercentage + '%' }"></div>
+              </div>
+              
+              <div class="progress-percentage">
+                <strong>{{ importPercentage }}%</strong>
+              </div>
 
-            <div class="warning-box mt-4" style="background: #fffbeb; padding: 12px; border-radius: 8px; color: #d97706; text-align: left; font-size: 0.85rem; border-left: 4px solid #f59e0b;">
-              <span class="alert-icon" style="margin-right: 5px;">⚠️</span> 
-              <small>กรุณาอย่าปิดหน้าต่างนี้ หรือรีเฟรชหน้าเว็บจนกว่าระบบจะทำงานเสร็จสิ้น เพื่อป้องกันข้อมูลสูญหายระหว่างทาง</small>
-            </div>
-            
+              <div class="warning-box mt-4" style="background: #fffbeb; padding: 12px; border-radius: 8px; color: #d97706; text-align: left; font-size: 0.85rem; border-left: 4px solid #f59e0b;">
+                <span class="alert-icon" style="margin-right: 5px;">⚠️</span> 
+                <small>กรุณาอย่าปิดหน้าต่างนี้ หรือรีเฟรชหน้าเว็บจนกว่าระบบจะทำงานเสร็จสิ้น เพื่อป้องกันข้อมูลสูญหายระหว่างทาง</small>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="warning-icon-large" style="background: #f0fdf4; color: #16a34a; box-shadow: 0 0 0 8px rgba(22, 163, 74, 0.1);">
+                <span style="font-size: 2.5rem;">✅</span>
+              </div>
+              <h3 class="progress-title mt-4" style="color: #166534;">นำเข้าข้อมูลเสร็จสิ้น!</h3>
+              <p class="progress-status-text" style="font-size: 1.1rem; color: #475569; margin-bottom: 25px;">
+                {{ importSummaryText }}
+              </p>
+              
+              <button type="button" class="btn btn-success btn-lg" style="width: 100%;" @click="closeImportProgressModal">
+                ตกลง
+              </button>
+            </template>
+
           </div>
         </div>
       </div>
@@ -633,6 +660,17 @@
       </div>
     </transition>
 
+    <transition name="fade">
+  <div v-if="showDateAlert" class="modern-alert-banner">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-text">
+      <strong>ไม่สามารถคำนวณวันกลับได้!</strong> <br/>
+      กรุณาระบุ "ระยะเวลา (วัน/คืน)" ในส่วนข้อมูลทั่วไป (ข้อ 1) ให้เรียบร้อยก่อนเลือกวันเดินทาง
+    </div>
+    <button @click="showDateAlert = false" class="close-alert-btn">✕</button>
+  </div>
+</transition>
+
   </div>
 </template>
 
@@ -646,6 +684,7 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import Papa from 'papaparse';
 
+
 // ---------------------------------------------------------------------
 // DEFAULT FORM
 // ---------------------------------------------------------------------
@@ -654,6 +693,8 @@ const createDefaultFormData = () => ({
   trip_code: '',
   trip_price_display: '',
   trip_days_nights: '',
+  trip_days: '',   // เพิ่มตัวเก็บจำนวนวัน
+  trip_nights: '', // เพิ่มตัวเก็บจำนวนคืน
   trip_schedule: '',
   tour_airlines: '',
   tour_hotel_rating: '5',
@@ -694,6 +735,7 @@ const createDefaultFormData = () => ({
 
 const formData = ref(createDefaultFormData())
 const today = new Date().toISOString().split('T')[0]
+const showDateAlert = ref(false);
 
 // ---------------------------------------------------------------------
 // ITINERARY BUILDER STATE
@@ -763,6 +805,119 @@ const confirmDuplicate = () => {
   
   closeDuplicateModal(); // ปิดหน้าต่าง
 }
+
+
+
+// 🟢 1. ฟังก์ชันคำนวณวันที่กลับอัตโนมัติ
+const autoCalculateEndDate = (roundIndex) => {
+  const round = formData.value.trip_pricing_data[roundIndex];
+  const days = parseInt(formData.value.trip_days);
+
+  if (!round.start_date) {
+    round.end_date = '';
+    return;
+  }
+
+  // ตรวจสอบว่าได้กรอกจำนวนวันในส่วนที่ 1 หรือยัง
+  if (!days || days <= 0) {
+    // 🟢 เปิดการแสดงผลแจ้งเตือน
+    showDateAlert.value = true;
+    round.start_date = '';
+    
+    // ตั้งเวลาให้แจ้งเตือนหายไปเองใน 5 วินาที
+    setTimeout(() => {
+      showDateAlert.value = false;
+    }, 5000);
+    
+    return;
+  }
+  showDateAlert.value = false;
+
+  // 🟢 หั่น String YYYY-MM-DD ออกมาสร้าง Date ตรงๆ เพื่อป้องกัน Timezone Bug
+  const [yearStr, monthStr, dayStr] = round.start_date.split('-');
+  const start = new Date(yearStr, monthStr - 1, dayStr); 
+  
+  // บวกจำนวนวัน (ลบ 1 เพราะนับวันเริ่มต้นเป็นวันที่ 1 ด้วย)
+  start.setDate(start.getDate() + (days - 1));
+  
+  // จัดรูปแบบกลับเป็น YYYY-MM-DD ให้ Input
+  const year = start.getFullYear();
+  const month = String(start.getMonth() + 1).padStart(2, '0');
+  const day = String(start.getDate()).padStart(2, '0');
+  
+  round.end_date = `${year}-${month}-${day}`;
+};
+
+// 🟢 2. Watcher คอยดูการเปลี่ยนแปลงของ "จำนวนวัน (trip_days)"
+watch(() => formData.value.trip_days, (newDays) => {
+  const targetDays = Number(newDays) || 0;
+  
+  // 2.1 จัดการเพิ่ม/ลด แถวตารางแผนการเดินทาง (Itinerary)
+  const currentRows = itineraryRows.value.length;
+  if (targetDays > currentRows) {
+    for (let i = currentRows; i < targetDays; i++) {
+      itineraryRows.value.push({ day: i + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' });
+    }
+  } else if (targetDays >= 0 && targetDays < currentRows) {
+    itineraryRows.value.splice(targetDays);
+  }
+
+  // 2.2 อัปเดตวันที่กลับให้ทุกรอบเดินทางที่มีการเลือก "วันที่ไป" ไว้แล้ว
+  if (formData.value.trip_pricing_data?.length > 0) {
+    formData.value.trip_pricing_data.forEach((round, index) => {
+      if (round.start_date) {
+        autoCalculateEndDate(index);
+      }
+    });
+  }
+});
+
+// 🟢 ฟังก์ชันเลือก "เดือนที่เดินทาง" อัตโนมัติตามวันที่ในตารางราคา
+const autoSelectMonths = () => {
+  // 1. ตรวจสอบก่อนว่าดึงข้อมูล Master Data ของเดือนมาหรือยัง
+  if (!monthsList.value.length) return;
+
+  // 2. ดึงลำดับเดือน (0-11) ที่ไม่ซ้ำกันจากทุกรอบเดินทาง
+  const selectedMonthIndices = new Set();
+  formData.value.trip_pricing_data.forEach(round => {
+    if (round.start_date) {
+      const date = new Date(round.start_date);
+      if (!isNaN(date.getTime())) {
+        selectedMonthIndices.add(date.getMonth()); // จะได้เลข 0-11
+      }
+    }
+  });
+
+  // รายชื่อเดือนภาษาไทย (แบบเต็ม) เพื่อใช้ค้นหาใน monthsList
+  const fullThaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+
+  const matchedIds = [];
+
+  // 3. วนลูปเดือนที่พบ เพื่อไปหา ID ใน monthsList
+  selectedMonthIndices.forEach(monthIdx => {
+    const targetMonthName = fullThaiMonths[monthIdx];
+    
+    // ค้นหาใน monthsList ว่ามีชื่อเดือนที่ตรงกันไหม (เช็คทั้งแบบเต็มและแบบย่อ)
+    const foundMonth = monthsList.value.find(m => 
+      m.name.includes(targetMonthName) || targetMonthName.includes(m.name)
+    );
+
+    if (foundMonth) {
+      matchedIds.push(foundMonth.id);
+    }
+  });
+
+  // 4. อัปเดตค่าลงใน month_ids ของฟอร์ม
+  formData.value.month_ids = matchedIds;
+};
+
+// 🟢 สั่งให้ทำงานทุกครั้งที่มีการเปลี่ยนวันที่ในตารางราคา (ใช้ Deep Watch)
+watch(() => formData.value.trip_pricing_data, () => {
+  autoSelectMonths();
+}, { deep: true });
 
 const generateItineraryHtml = () => {
   const getIconHtml = (type) => {
@@ -997,14 +1152,35 @@ const fetchFestivals = async () => {
   } catch (err) { console.error(err) } finally { loadingFestivals.value = false }
 }
 
+// const fetchMonths = async () => {
+//   loadingMonths.value = true
+//   try {
+//     const res = await publicApi.get('/taxonomy-terms/month')
+//     if (res.data?.success) monthsList.value = res.data.items
+//   } catch (err) { console.error(err) } finally { loadingMonths.value = false }
+// }
+
 const fetchMonths = async () => {
   loadingMonths.value = true
   try {
     const res = await publicApi.get('/taxonomy-terms/month')
-    if (res.data?.success) monthsList.value = res.data.items
-  } catch (err) { console.error(err) } finally { loadingMonths.value = false }
+    if (res.data?.success) {
+      // 🟢 วนลูปเช็คชื่อเดือน ถ้าเจอ "เมษายน" ให้เพิ่ม disabled: true เข้าไป
+      monthsList.value = res.data.items.map(month => {
+        if (month.name.includes('เมษายน')) {
+          return { ...month, disabled: true } // บล็อกไม่ให้ User แก้ไขตัวนี้
+        }
+        return month;
+      });
+      
+      autoSelectMonths(); 
+    }
+  } catch (err) { 
+    console.error(err) 
+  } finally { 
+    loadingMonths.value = false 
+  }
 }
-
 const fetchPricingCategories = async () => {
   loadingPricingCategories.value = true
   try {
@@ -1105,24 +1281,20 @@ const buildPayload = () => {
   const payload = JSON.parse(JSON.stringify(formData.value))
   payload.tour_schedule_details = generateItineraryHtml()
 
+  // if (!isFormComplete.value) {
+  //   payload.status = 'draft'
+  // } else {
+  //   payload.status = formData.value.status || 'publish'
+  // }
+  // 🟢 บังคับสถานะก่อนบันทึก: ครบ = publish, ไม่ครบ = draft แบบเด็ดขาด
+  payload.status = isFormComplete.value ? 'publish' : 'draft';
 
-  // 🟢 เพิ่มเงื่อนไข: ถ้าฟอร์มไม่ครบ (ปุ่มขึ้นว่าแบบร่าง) ให้บังคับสถานะเป็น draft อัตโนมัติ
-  if (!isFormComplete.value) {
-    payload.status = 'draft'
-  } else {
-    // ถ้าข้อมูลครบแล้ว ให้ยึดตามที่ผู้ใช้อาจจะตั้งค่าไว้ (หรือบังคับเป็น publish ก็ได้)
-    payload.status = formData.value.status || 'publish'
-  }
-
-  // 🟢 1. ตัด HTML ออกจาก Excerpt ให้เหลือเฉพาะข้อความล้วน
   if (payload.excerpt) {
-    // ใช้สร้าง Element จำลองเพื่อดูดเฉพาะข้อความ (ป้องกัน Tag หรือ &nbsp; หลุดไป)
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = payload.excerpt;
     payload.excerpt = tempDiv.textContent || tempDiv.innerText || "";
   }
 
-  // เคลียร์ค่าว่างและช่องว่างของ Title/Code
   payload.title = String(payload.title || '').trim()
   payload.trip_code = String(payload.trip_code || '').trim()
 
@@ -1134,13 +1306,13 @@ const buildPayload = () => {
       prices: (round.prices || []).map(price => ({ category: String(price.category || '').trim(), amount: Number(price.amount) || 0 })).filter(price => price.category !== '' && price.amount > 0)
     })).filter(round => round.prices.length > 0)
 
-  payload.trip_days = mainRoundDuration.value.days
-  payload.trip_nights = mainRoundDuration.value.nights
-  payload.trip_days_nights = payload.trip_days ? `${payload.trip_days} วัน ${payload.trip_nights} คืน` : ''
+  // 🟢 จุดสำคัญ: บังคับให้ Payload ใช้จำนวนวันตามที่แอดมินกรอกในฟอร์มเท่านั้น
+  payload.trip_days = Number(formData.value.trip_days) || 0;
+  payload.trip_nights = Number(formData.value.trip_nights) || 0;
+  payload.trip_days_nights = payload.trip_days ? `${payload.trip_days} วัน ${payload.trip_nights} คืน` : '';
   
   return payload
 }
-
 const submitTourData = async () => {
   successMessage.value = ''; errorMessage.value = ''; uploadProgressText.value = ''
   if (!formData.value.title.trim() || !formData.value.trip_code.trim()) return errorMessage.value = 'กรุณากรอกชื่อทัวร์และรหัสทัวร์'
@@ -1328,6 +1500,16 @@ const convertToWebP = (file, quality = 1.0) => { // 🟢 ปรับเป็�
 
 const csvFileInput = ref(null);
 const isImporting = ref(false);
+
+const isImportComplete = ref(false);
+const importSummaryText = ref('');
+const closeImportProgressModal = () => {
+  isImporting.value = false;
+  isImportComplete.value = false;
+  successMessage.value = importSummaryText.value; // โชว์แจ้งเตือนสีเขียวมุมขวา
+  setTimeout(() => successMessage.value = '', 4000); // ซ่อนอัตโนมัติใน 4 วิ
+};
+
 const importProgress = ref('');
 const parsedTours = ref([]);
 const showPreviewModal = ref(false);
@@ -1543,30 +1725,57 @@ const handleCsvImport = (event) => {
 
 
 // 🟢 ตรวจสอบว่ากรอกข้อมูลครบทุกช่องที่สำคัญหรือไม่
+// const isFormComplete = computed(() => {
+//   const fd = formData.value;
+  
+//   // 1. ข้อมูลทั่วไป
+//   const hasGeneral = fd.title && fd.trip_code && fd.trip_days && fd.trip_nights;
+  
+//   // 2. ข้อมูลการเดินทาง (เช็กว่าเลือกจุดหมายอย่างน้อย 1 ที่)
+//   const hasTravel = fd.tour_airlines && fd.destination_ids?.length > 0;
+  
+//   // 3. รอบเดินทาง (ต้องมีอย่างน้อย 1 รอบ และในรอบนั้นต้องมีราคา)
+//   const hasPricing = fd.trip_pricing_data?.length > 0 && 
+//                      fd.trip_pricing_data.every(round => 
+//                         round.start_date && round.prices?.some(p => p.amount > 0)
+//                      );
+  
+//   // 4. รายละเอียดเนื้อหา
+//   const hasContent = fd.excerpt && fd.overview && fd.tour_highlight && itineraryRows.value.length > 0;
+  
+//   // 5. ไฟล์แนบ (ถ้าหน้าเพิ่มต้องมีไฟล์ใหม่ ถ้าหน้าแก้ไขมีของเดิมหรือของใหม่ก็ได้)
+//   const hasImage = featuredImageFile.value || (typeof currentFeaturedImageUrl !== 'undefined' && currentFeaturedImageUrl.value);
+//   const hasPdf = pdfFile.value || (typeof currentPdfUrl !== 'undefined' && currentPdfUrl.value);
+
+//   return hasGeneral && hasTravel && hasPricing && hasContent && hasImage && hasPdf;
+// });
+// 🟢 โค้ดเดิมที่มีอยู่แล้ว (เอาไว้ดูเป็นจุดอ้างอิง)
 const isFormComplete = computed(() => {
   const fd = formData.value;
-  
-  // 1. ข้อมูลทั่วไป
   const hasGeneral = fd.title && fd.trip_code && fd.trip_days && fd.trip_nights;
-  
-  // 2. ข้อมูลการเดินทาง (เช็กว่าเลือกจุดหมายอย่างน้อย 1 ที่)
   const hasTravel = fd.tour_airlines && fd.destination_ids?.length > 0;
-  
-  // 3. รอบเดินทาง (ต้องมีอย่างน้อย 1 รอบ และในรอบนั้นต้องมีราคา)
   const hasPricing = fd.trip_pricing_data?.length > 0 && 
                      fd.trip_pricing_data.every(round => 
                         round.start_date && round.prices?.some(p => p.amount > 0)
                      );
-  
-  // 4. รายละเอียดเนื้อหา
   const hasContent = fd.excerpt && fd.overview && fd.tour_highlight && itineraryRows.value.length > 0;
-  
-  // 5. ไฟล์แนบ (ถ้าหน้าเพิ่มต้องมีไฟล์ใหม่ ถ้าหน้าแก้ไขมีของเดิมหรือของใหม่ก็ได้)
   const hasImage = featuredImageFile.value || (typeof currentFeaturedImageUrl !== 'undefined' && currentFeaturedImageUrl.value);
   const hasPdf = pdfFile.value || (typeof currentPdfUrl !== 'undefined' && currentPdfUrl.value);
 
   return hasGeneral && hasTravel && hasPricing && hasContent && hasImage && hasPdf;
 });
+
+// --------------------------------------------------
+// 🟢 ส่วนที่ต้อง ก๊อปปี้ไปวางเพิ่ม ตรงนี้ครับ 👇
+// --------------------------------------------------
+watch(isFormComplete, (isComplete) => {
+  if (isComplete) {
+    formData.value.status = 'publish'; // ถ้าข้อมูลบังคับครบแล้ว ให้ปรับช่องเป็น เผยแพร่
+  } else {
+    formData.value.status = 'draft';   // ถ้ายังไม่ครบ ให้ปรับช่องเป็น ซ่อนไว้ก่อน
+  }
+}, { immediate: true });
+// --------------------------------------------------
 
 
 
@@ -1727,12 +1936,12 @@ const processImportTours = async (tours) => {
     importPercentage.value = Math.round(((i + 1) / tours.length) * 100);
   }
 
-  // 🟢 หน่วงเวลาให้แถบโหลดวิ่งเต็ม 100% สักครึ่งวินาที ค่อยปิด Popup
-  setTimeout(() => {
-    isImporting.value = false;
-    importProgress.value = '';
-    importPercentage.value = 0;
-    alert(`✅ นำเข้าสำเร็จ ${successCount} จาก ${tours.length} รายการ`);
+ setTimeout(() => {
+    importSummaryText.value = `นำเข้าสำเร็จ ${successCount} จาก ${tours.length} รายการ`;
+    isImportComplete.value = true;
+    
+    // (เอาโค้ด isImporting.value = false และ alert() ของเดิมออกไปเลยครับ)
+    
   }, 500);
 };
 
@@ -2505,6 +2714,53 @@ const processImportTours = async (tours) => {
 
 .submit-btn {
   min-width: 250px;
+}
+
+/* 🟢 ตกแต่งแถบแจ้งเตือน */
+.modern-alert-banner {
+  display: flex;
+  align-items: center;
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.alert-text {
+  flex-grow: 1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.close-alert-btn {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 8px;
+  opacity: 0.7;
+}
+
+.close-alert-btn:hover {
+  opacity: 1;
+}
+
+/* เอฟเฟกต์ตอนแจ้งเตือนปรากฏ/หายไป */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .alert {

@@ -23,11 +23,12 @@
       </div>
 
       <div class="filter-actions">
-        <select v-model="filterStatus" class="form-control form-select filter-select">
-          <option value="all">สถานะทั้งหมด</option>
-          <option value="publish">✅ เฉพาะที่เผยแพร่</option>
-          <option value="draft">📝 เฉพาะฉบับร่าง</option>
-        </select>
+       <select v-model="filterStatus" class="form-control form-select filter-select">
+  <option value="all">สถานะทั้งหมด</option>
+  <option value="publish">✅ เฉพาะที่เผยแพร่</option>
+  <option value="draft">📝 เฉพาะฉบับร่าง</option>
+  <option value="expired">🚫 ทัวร์ที่หมดอายุ</option>
+</select>
 
         <div class="view-toggle">
           <button type="button" class="btn-view" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="มุมมองแบบการ์ด">
@@ -54,7 +55,7 @@
 
     <div v-else :class="['tour-display-area', viewMode === 'grid' ? 'grid-mode' : 'list-mode']">
       
-      <div v-for="tour in filteredTours" :key="tour.id" class="tour-card shadow-sm">
+      <div v-for="(tour, index) in filteredTours" :key="tour?.id || index" class="tour-card shadow-sm">
         
         <div class="card-image">
           <img class="tour-card-image" :src="tour.featured_image_url || 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" alt="Tour Image" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
@@ -142,6 +143,7 @@
         </div>
       </div>
     </transition>
+
 
    <transition name="fade">
       <div v-if="showStatusModal" class="custom-modal-overlay" @click.self="cancelStatusChange">
@@ -240,6 +242,36 @@ const cancelStatusChange = () => {
   pendingNewStatus.value = ''
 }
 
+
+// 🟢 วันที่ปัจจุบัน (YYYY-MM-DD) เพื่อใช้เทียบ
+const today = new Date().toISOString().split('T')[0];
+
+// 🟢 ฟังก์ชันเช็คว่าทัวร์นี้ "หมดอายุทั้งหมดแล้ว" หรือไม่
+// 🟢 ฟังก์ชันตรวจสอบว่าทัวร์หมดอายุทุกรอบหรือยัง
+const isTourExpired = (tour) => {
+  // 1. ดักจับ Error: ถ้า tour เป็น undefined หรือ null ให้ข้ามไปเลย (return false)
+  if (!tour) {
+    return false;
+  }
+
+  // 2. ดักจับ Error: ถ้าไม่มี property trip_pricing_data หรือไม่ใช่ Array หรือ Array ว่าง
+  if (!tour.trip_pricing_data || !Array.isArray(tour.trip_pricing_data) || tour.trip_pricing_data.length === 0) {
+    return false;
+  }
+
+  const today = new Date().toISOString().split('T')[0]; // ได้ค่าเป็น YYYY-MM-DD
+  
+  // 3. ตรวจสอบเงื่อนไขวันหมดอายุ
+  return tour.trip_pricing_data.every(round => {
+    return round.end_date && round.end_date < today;
+  });
+};
+// 🟢 (ตัวเลือก) สร้าง Filter เพื่อดึงเฉพาะทัวร์ที่หมดอายุแล้วมาดู
+const expiredTours = computed(() => {
+  return tours.value.filter(tour => isTourExpired(tour));
+});
+
+
 // 🟢 ฟังก์ชันเมื่อกดยืนยันการเปลี่ยนสถานะ
 const confirmStatusChange = async () => {
   if (!pendingStatusTour.value) return
@@ -312,6 +344,31 @@ const secureApi = axios.create({
   timeout: 60000
 })
 
+secureApi.interceptors.response.use((response) => {
+  if (typeof response.data === 'string') {
+    // หาตำแหน่งของปีกกา { หรือ [ ตัวแรกที่เป็นจุดเริ่มต้นของ JSON จริงๆ
+    const firstObj = response.data.indexOf('{');
+    const firstArr = response.data.indexOf('[');
+    
+    let firstValidIndex = -1;
+    if (firstObj !== -1 && firstArr !== -1) firstValidIndex = Math.min(firstObj, firstArr);
+    else firstValidIndex = Math.max(firstObj, firstArr);
+
+    // ถ้ามี HTML ขยะนำหน้า ให้ตัดทิ้งแล้วแปลงกลับเป็น JSON
+    if (firstValidIndex > 0) {
+      try {
+        const cleanJson = response.data.substring(firstValidIndex);
+        response.data = JSON.parse(cleanJson);
+      } catch (e) {
+        console.error('พยายามคลีน HTML ขยะแต่แปลง JSON ไม่สำเร็จ:', e);
+      }
+    }
+  }
+  return response;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 const fetchMasterData = async () => {
   try {
     const [airRes, destRes] = await Promise.all([
@@ -343,17 +400,23 @@ const getDestinationNames = (idsArray) => {
 
 const fetchTours = async () => {
   isLoading.value = true
-  errorMessage.value = ''
   try {
-    const response = await secureApi.get('/tours') 
+    const response = await secureApi.get('/tours')
+    
     if (response.data && response.data.success) {
-      tours.value = (response.data.items || []).map(t => ({ ...t, isUpdating: false }))
+      // 🚨 จุดสำคัญ: ต้องรับค่าจาก response.data.items (ห้ามใช้ .data ซ้อนกัน)
+      tours.value = response.data.items || [] 
+      .filter(t => t !== null && t !== undefined) // 🟢 เพิ่มบรรทัดนี้ เพื่อกรองข้อมูลที่พังทิ้งไป
+        .map(t => ({ ...t, isUpdating: false }))
+      
+      // ลองใส่ Console.log เพื่อเช็คให้ชัวร์ว่าข้อมูลเข้า Vue แล้ว
+      console.log('✅ ข้อมูลทัวร์ที่โหลดได้:', tours.value)
     } else {
       tours.value = []
     }
   } catch (error) {
-    console.error('Error fetching tours:', error)
-    errorMessage.value = 'ไม่สามารถดึงข้อมูลทัวร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'
+    console.error(error)
+    errorMessage.value = 'ไม่สามารถดึงข้อมูลทัวร์ได้'
   } finally {
     isLoading.value = false
   }
@@ -361,8 +424,15 @@ const fetchTours = async () => {
 
 const filteredTours = computed(() => {
   let result = tours.value
-  if (filterStatus.value !== 'all') result = result.filter(t => t.status === filterStatus.value)
+  
+  // เช็คเงื่อนไข Filter Dropdown
+  if (filterStatus.value === 'publish' || filterStatus.value === 'draft') {
+    result = result.filter(t => t.status === filterStatus.value)
+  } else if (filterStatus.value === 'expired') {
+    result = result.filter(t => isTourExpired(t)) // ดึงเฉพาะที่หมดอายุแล้ว
+  }
 
+  // เช็คเงื่อนไขช่องค้นหา
   if (searchQuery.value.trim() !== '') {
     const q = searchQuery.value.toLowerCase().trim()
     result = result.filter(t => {
@@ -559,6 +629,8 @@ onMounted(async () => {
   background-color: white;
   cursor: pointer;
 }
+
+
 
 .view-toggle {
   display: flex;
