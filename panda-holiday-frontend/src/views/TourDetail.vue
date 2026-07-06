@@ -19,10 +19,10 @@
     </div>
 
     <form v-else @submit.prevent="updateTourData" class="modern-form">
-      
+
       <section class="form-section shadow-sm">
         <h2 class="section-title"><span class="number">1</span> ข้อมูลทั่วไป (General Info)</h2>
-        
+
         <div>
           <input type="hidden" v-model="formData.trip_price_display" />
           <input type="hidden" v-model="formData.trip_schedule" />
@@ -42,16 +42,19 @@
           <div class="form-group">
             <label>ระยะเวลา (วัน / คืน)</label>
             <div class="auto-calc-group">
-              <input type="number" v-model="formData.trip_days" placeholder="จำนวนวัน" class="form-control text-center" min="1" />
+              <input type="number" v-model="formData.trip_days" placeholder="จำนวนวัน" class="form-control text-center"
+                min="1" />
               <span class="calc-divider">วัน</span>
-              <input type="number" v-model="formData.trip_nights" placeholder="จำนวนคืน" class="form-control text-center" min="0" />
+              <input type="number" v-model="formData.trip_nights" placeholder="จำนวนคืน"
+                class="form-control text-center" min="0" />
               <span class="calc-divider">คืน</span>
             </div>
           </div>
 
           <div class="form-group">
             <label>สถานะการแสดงผล (Status) <span class="required">*</span></label>
-            <select v-model="formData.status" required class="form-control form-select status-select" :class="formData.status">
+            <select v-model="formData.status" required class="form-control form-select status-select"
+              :class="formData.status">
               <option value="publish">✅ เผยแพร่ (แสดงบนหน้าเว็บ)</option>
               <option value="draft">📝 ฉบับร่าง (ซ่อนจากหน้าเว็บ)</option>
             </select>
@@ -61,7 +64,7 @@
 
       <section class="form-section shadow-sm">
         <h2 class="section-title"><span class="number">2</span> ข้อมูลการเดินทาง (Travel Info)</h2>
-        
+
         <div class="form-grid grid-col-2">
           <div class="form-group">
             <label>สายการบิน (Airlines)</label>
@@ -85,33 +88,22 @@
 
           <div class="form-group full-width">
             <label>จุดหมายปลายทาง (Destinations)</label>
-            <Multiselect
-              v-model="formData.destination_ids" :options="destinationsList" mode="tags" :searchable="true"
-              valueProp="id" label="name" :disabled="loadingDestinations" class="modern-multiselect"
-            />
+            <Multiselect v-model="formData.destination_ids" :options="destinationsList" mode="tags" :searchable="true"
+              valueProp="id" label="name" :disabled="loadingDestinations" class="modern-multiselect" />
           </div>
 
           <div class="form-group">
             <label>เทศกาล (Festival)</label>
-            <Multiselect
-              v-model="formData.festival_ids" :options="festivalsList" mode="tags" :searchable="true"
-              valueProp="id" label="name" :disabled="loadingFestivals" class="modern-multiselect"
-            />
+            <Multiselect v-model="formData.festival_ids" :options="festivalsList" mode="tags" :searchable="true"
+              valueProp="id" label="name" :disabled="loadingFestivals" class="modern-multiselect" />
           </div>
 
           <div class="form-group">
-            <label>เดือนที่เดินทาง (Month Categories) <span style="color: #d97706; font-size: 0.85rem;">(อัปเดตอัตโนมัติตามวันเดินทาง)</span></label>
-            <Multiselect 
-              v-model="formData.month_ids" 
-              :options="monthsList" 
-              mode="tags" 
-              :searchable="true" 
-              valueProp="id" 
-              label="name" 
-              placeholder="ระบบจะเลือกเดือนให้อัตโนมัติ..." 
-              :disabled="loadingMonths" 
-              class="modern-multiselect" 
-            />
+            <label>เดือนที่เดินทาง (Month Categories) <span
+                style="color: #d97706; font-size: 0.85rem;">(อัปเดตอัตโนมัติตามวันเดินทาง)</span></label>
+            <Multiselect v-model="formData.month_ids" :options="monthsList" mode="tags" :searchable="true"
+              valueProp="id" label="name" placeholder="ระบบจะเลือกเดือนให้อัตโนมัติ..." :disabled="loadingMonths"
+              class="modern-multiselect" />
           </div>
         </div>
       </section>
@@ -119,9 +111,10 @@
       <section class="form-section shadow-sm pricing-section">
         <div class="section-header-flex">
           <h2 class="section-title"><span class="number">3</span> รอบเดินทางและราคา (Pricing Rounds)</h2>
-          
+
           <div class="pricing-header-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" @click="sortByDate" class="btn btn-outline-secondary btn-sm">📅 เรียงตามวันที่</button>
+            <button type="button" @click="sortByDate" class="btn btn-outline-secondary btn-sm">📅
+              เรียงตามวันที่</button>
             <button type="button" @click="sortByPrice" class="btn btn-outline-secondary btn-sm">💰 เรียงตามราคา</button>
             <button type="button" @click="addPricingRound" class="btn btn-success btn-sm">➕ เพิ่มรอบเดินทาง</button>
           </div>
@@ -129,11 +122,12 @@
 
         <div class="pricing-rounds-container">
           <div v-for="(round, roundIndex) in formData.trip_pricing_data" :key="roundIndex" class="pricing-round-card">
-            
+
             <div class="round-card-header">
               <h3 class="round-number">รอบที่ {{ roundIndex + 1 }}</h3>
               <div class="action-right" style="display: flex; gap: 8px;">
-                <button type="button" @click="openDuplicateModal(roundIndex)" class="btn btn-outline-primary btn-xs" title="คัดลอกรอบนี้">
+                <button type="button" @click="openDuplicateModal(roundIndex)" class="btn btn-outline-primary btn-xs"
+                  title="คัดลอกรอบนี้">
                   📋 คัดลอกราคานี้
                 </button>
                 <button type="button" @click="removePricingRound(roundIndex)" class="btn-icon-danger" title="ลบรอบนี้">
@@ -151,18 +145,20 @@
 
               <div class="form-group">
                 <label>วันที่กลับ (End Date)</label>
-                <input type="date" v-model="round.end_date" class="form-control readonly-input" 
-                  readonly placeholder="คำนวณอัตโนมัติ" />
+                <input type="date" v-model="round.end_date" class="form-control readonly-input" readonly
+                  placeholder="คำนวณอัตโนมัติ" />
               </div>
-              
+
               <div class="form-group">
                 <label>จำนวนรับได้สูงสุด (Max Pax.)</label>
-                <input type="number" v-model="round.max_pax" placeholder="เช่น 20 หรือ 30" class="form-control" min="1" />
+                <input type="number" v-model="round.max_pax" placeholder="เช่น 20 หรือ 30" class="form-control"
+                  min="1" />
               </div>
-              
+
               <div class="form-group">
                 <label>ระยะเวลา (อิงจากข้อมูลหลักด้านบน)</label>
-                <input type="text" :value="`${formData.trip_days || 0} วัน ${formData.trip_nights || 0} คืน`" readonly class="form-control readonly-input" />
+                <input type="text" :value="`${formData.trip_days || 0} วัน ${formData.trip_nights || 0} คืน`" readonly
+                  class="form-control readonly-input" />
               </div>
             </div>
 
@@ -174,61 +170,57 @@
     item-key="category" 
     handle=".drag-handle" 
     animation="200"
-    :disabled="round.prices.length <= 1" 
   >
     <template #item="{ element: price, index: priceIndex }">
-      <div class="price-row-grid">
+      <div class="price-row-grid" style="grid-template-columns: 30px 1fr 1fr; align-items: center;">
         
-        <span class="drag-handle" 
-              :class="{ 'disabled-handle': round.prices.length <= 1 }"
-              :title="round.prices.length > 1 ? 'ลากเพื่อเปลี่ยนลำดับ' : ''">
+        <span class="drag-handle" title="ลากเพื่อเปลี่ยนลำดับ" style="cursor: grab; text-align: center; font-size: 1.2rem;">
           ☰
         </span>
 
-      <select v-model="price.category" class="form-control form-control-sm form-select" disabled>
-  <option value="" disabled>-- เลือกหมวดหมู่ราคา --</option>
-  <option v-for="cat in pricingCategoriesList" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
-</select>
+        <select v-model="price.category" class="form-control form-control-sm form-select" disabled>
+          <option value="พักคู่">พักคู่</option>
+          <option value="พักเดี่ยว">พักเดี่ยว</option>
+          <option v-for="cat in pricingCategoriesList" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+        </select>
 
         <input type="text" 
           :value="price.amount ? Number(price.amount).toLocaleString('th-TH') : ''"
-          @input="onPriceInput($event, roundIndex, priceIndex)"
-          placeholder="ราคา (เช่น 89,900)" class="form-control form-control-sm price-input" />
-
-        <button type="button" @click="removePriceCategory(roundIndex, priceIndex)" class="btn btn-outline-danger btn-xs">ลบ</button>
-        
+          @input="onPriceInput($event, roundIndex, priceIndex)" 
+          placeholder="ราคา (เช่น 89,900)" 
+          class="form-control form-control-sm price-input" />
+          
       </div>
     </template>
   </draggable>
-
-
-  <!-- <button type="button" @click="addPriceCategory(roundIndex)" class="btn btn-outline-success btn-xs mt-3 full-width-btn">
-    ➕ เพิ่มหมวดหมู่ราคา
-  </button> -->
 </div>
           </div>
         </div>
       </section>
 
+      
       <section class="form-section shadow-sm program-details-section">
         <h2 class="section-title"><span class="number">4</span> รายละเอียดโปรแกรม (Program Details)</h2>
-        
+
         <div class="form-group full-width">
           <label>ภาพรวมโปรแกรมสั้นๆ (Overview / Excerpt)</label>
-          <textarea v-model="formData.excerpt" class="form-control" rows="3" placeholder="สรุปโปรแกรมทัวร์สั้นๆ เพื่อดึงดูดลูกค้า..."></textarea>
+          <textarea v-model="formData.excerpt" class="form-control" rows="3"
+            placeholder="สรุปโปรแกรมทัวร์สั้นๆ เพื่อดึงดูดลูกค้า..."></textarea>
         </div>
 
         <div class="form-group full-width mt-4">
           <label>Overview</label>
           <div class="quill-wrapper">
-           <QuillEditor theme="snow" v-model:content="formData.overview" contentType="html" placeholder="กรอกข้อมูล Overview..." />
+            <QuillEditor theme="snow" v-model:content="formData.overview" contentType="html"
+              placeholder="กรอกข้อมูล Overview..." />
           </div>
         </div>
 
         <div class="form-group full-width mt-4">
           <label>เส้นทางไฮไลท์ (Highlight)</label>
           <div class="quill-wrapper">
-            <QuillEditor theme="snow" v-model:content="formData.tour_highlight" contentType="html" placeholder="เช่น กรุงเทพ - เฉินตู - คัชการ์..." />
+            <QuillEditor theme="snow" v-model:content="formData.tour_highlight" contentType="html"
+              placeholder="เช่น กรุงเทพ - เฉินตู - คัชการ์..." />
           </div>
         </div>
 
@@ -255,25 +247,35 @@
                 </tr>
                 <tr v-for="(row, index) in itineraryRows" :key="index">
                   <td class="text-center"><span class="day-badge">{{ row.day }}</span></td>
-                  <td><input type="text" v-model="row.detail" placeholder="เช่น กรุงเทพฯ - เฉิงตู" class="form-control form-control-sm" /></td>
+                  <td><input type="text" v-model="row.detail" placeholder="เช่น กรุงเทพฯ - เฉิงตู"
+                      class="form-control form-control-sm" /></td>
                   <td>
                     <select v-model="row.morning" class="form-control form-control-sm form-select icon-select">
-                      <option value="-">-</option><option value="food">🍽️ อาหาร</option><option value="plane">✈️ บิน</option>
+                      <option value="-">-</option>
+                      <option value="food">🍽️ อาหาร</option>
+                      <option value="plane">✈️ บิน</option>
                     </select>
                   </td>
                   <td>
                     <select v-model="row.lunch" class="form-control form-control-sm form-select icon-select">
-                      <option value="-">-</option><option value="food">🍽️ อาหาร</option><option value="plane">✈️ บิน</option>
+                      <option value="-">-</option>
+                      <option value="food">🍽️ อาหาร</option>
+                      <option value="plane">✈️ บิน</option>
                     </select>
                   </td>
                   <td>
                     <select v-model="row.dinner" class="form-control form-control-sm form-select icon-select">
-                      <option value="-">-</option><option value="food">🍽️ อาหาร</option><option value="plane">✈️ บิน</option>
+                      <option value="-">-</option>
+                      <option value="food">🍽️ อาหาร</option>
+                      <option value="plane">✈️ บิน</option>
                     </select>
                   </td>
-                  <td><input type="text" v-model="row.hotel" placeholder="ชื่อโรงแรม" class="form-control form-control-sm" /></td>
+                  <td><input type="text" v-model="row.hotel" placeholder="ชื่อโรงแรม"
+                      class="form-control form-control-sm" />
+                  </td>
                   <td class="text-center">
-                    <button type="button" @click="removeItineraryRow(index)" class="btn-icon-danger" title="ลบข้อมูลวันนี้">❌</button>
+                    <button type="button" @click="removeItineraryRow(index)" class="btn-icon-danger"
+                      title="ลบข้อมูลวันนี้">❌</button>
                   </td>
                 </tr>
               </tbody>
@@ -283,37 +285,46 @@
       </section>
 
       <section class="form-section shadow-sm seo-section">
-        <h2 class="section-title"><span class="number" style="background-color: #2563eb;">5</span> ตั้งค่า SEO (Rank Math)</h2>
+        <h2 class="section-title"><span class="number" style="background-color: #2563eb;">5</span> ตั้งค่า SEO (Rank
+          Math)
+        </h2>
         <div class="form-grid grid-col-2">
           <div class="form-group full-width-mobile">
             <label>คีย์เวิร์ดหลัก (Focus Keyword)</label>
-            <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น ทัวร์จีน, ทัวร์ซินเจียง" class="form-control" />
+            <input type="text" v-model="formData.rank_math_focus_keyword" placeholder="เช่น ทัวร์จีน, ทัวร์ซินเจียง"
+              class="form-control" />
           </div>
 
           <div class="form-group full-width-mobile">
             <label>ชื่อไตเติ้ล SEO (SEO Title)</label>
-            <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าเริ่มต้นของระบบ" class="form-control" />
-            <small style="color: #64748b; font-size: 0.8rem; margin-top: 4px;">💡 ถ้าเว้นว่าง จะดึงชื่อทัวร์ไปใช้โดยอัตโนมัติ</small>
+            <input type="text" v-model="formData.rank_math_title" placeholder="เว้นว่างไว้เพื่อใช้ค่าเริ่มต้นของระบบ"
+              class="form-control" />
+            <small style="color: #64748b; font-size: 0.8rem; margin-top: 4px;">💡 ถ้าเว้นว่าง
+              จะดึงชื่อทัวร์ไปใช้โดยอัตโนมัติ</small>
           </div>
 
           <div class="form-group full-width mt-2">
             <label>
               คำอธิบาย SEO (Meta Description)
-              <span class="size-hint" style="float: right; font-weight: normal; color: #64748b;">{{ formData.rank_math_description.length }} / 160 ตัวอักษร</span>
+              <span class="size-hint" style="float: right; font-weight: normal; color: #64748b;">{{
+                formData.rank_math_description.length }} / 160 ตัวอักษร</span>
             </label>
-            <textarea v-model="formData.rank_math_description" rows="3" placeholder="พิมพ์คำอธิบายดึงดูดลูกค้าที่จะแสดงบนหน้าค้นหาของ Google..." class="form-control" style="resize: vertical;"></textarea>
+            <textarea v-model="formData.rank_math_description" rows="3"
+              placeholder="พิมพ์คำอธิบายดึงดูดลูกค้าที่จะแสดงบนหน้าค้นหาของ Google..." class="form-control"
+              style="resize: vertical;"></textarea>
           </div>
         </div>
       </section>
 
       <section class="form-section shadow-sm files-preview-section">
         <h2 class="section-title"><span class="number">6</span> ไฟล์แนบและรูปภาพ</h2>
-        
+
         <div class="form-grid grid-col-2">
           <div class="form-group">
             <label>ไฟล์ PDF โปรแกรมทัวร์</label>
             <div v-if="currentPdfUrl" class="current-file-preview">
-              <a :href="currentPdfUrl" target="_blank" class="btn btn-outline-danger btn-sm file-pdf-view">📄 ดูไฟล์ PDF ปัจจุบัน</a>
+              <a :href="currentPdfUrl" target="_blank" class="btn btn-outline-danger btn-sm file-pdf-view">📄 ดูไฟล์ PDF
+                ปัจจุบัน</a>
             </div>
             <div class="file-input-wrapper mt-2">
               <input type="file" accept="application/pdf" @change="onPdfChange" class="form-control-file" />
@@ -327,8 +338,10 @@
           <div class="form-group">
             <label>รูปภาพหน้าปก (Featured Image)</label>
             <div class="current-image-preview">
-              <img v-if="featuredImagePreview" :src="featuredImagePreview" alt="New Featured Image" class="preview-img shadow-sm" />
-              <img v-else-if="currentFeaturedImageUrl" :src="currentFeaturedImageUrl" alt="Current Featured Image" class="preview-img shadow-sm" />
+              <img v-if="featuredImagePreview" :src="featuredImagePreview" alt="New Featured Image"
+                class="preview-img shadow-sm" />
+              <img v-else-if="currentFeaturedImageUrl" :src="currentFeaturedImageUrl" alt="Current Featured Image"
+                class="preview-img shadow-sm" />
             </div>
             <div class="file-input-wrapper mt-2">
               <input type="file" accept="image/*" @change="onFeaturedImageChange" class="form-control-file" />
@@ -390,7 +403,7 @@
       <div v-if="showDateAlert" class="modern-alert-banner">
         <div class="alert-icon">⚠️</div>
         <div class="alert-text">
-          <strong>ไม่สามารถคำนวณวันกลับได้!</strong> <br/>
+          <strong>ไม่สามารถคำนวณวันกลับได้!</strong> <br />
           กรุณาระบุ "ระยะเวลา (วัน/คืน)" ในส่วนข้อมูลทั่วไป (ข้อ 1) ให้เรียบร้อยก่อนเลือกวันเดินทาง
         </div>
         <button @click="showDateAlert = false" class="close-alert-btn">✕</button>
@@ -416,12 +429,12 @@ const tourId = route.params.id
 
 // 1. API สำหรับดึงข้อมูลมาแสดงผล (วิ่งไปหา WordPress)
 const publicApi = axios.create({
-  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
 const secureApi = axios.create({
-  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1',
   timeout: 60000
 })
 
@@ -431,11 +444,19 @@ const secureApi = axios.create({
 const formData = ref({
   title: '', trip_code: '', trip_price_display: '', trip_days_nights: '', trip_schedule: '',
   trip_days: '', trip_nights: '',
-  status: 'publish', tour_airlines: '', tour_hotel_rating: '5', excerpt: '', content: '', overview: '',wp_travel_overview: '',
+  status: 'publish', tour_airlines: '', tour_hotel_rating: '5', excerpt: '', content: '', overview: '', wp_travel_overview: '',
   tour_highlight: '', tour_schedule_details: '',
   destination_ids: [], festival_ids: [], month_ids: [],
   tour_pdf: 0, featured_image_id: 0, gallery_image_ids: [],
-  trip_pricing_data: [],
+  trip_pricing_data: [
+    {
+      start_date: '', end_date: '', max_pax: '',
+      prices: [
+        { category: 'พักคู่', amount: '' },
+        { category: 'พักเดี่ยว', amount: '' }
+      ]
+    }
+  ],
   rank_math_focus_keyword: '', rank_math_title: '', rank_math_description: ''
 })
 
@@ -484,11 +505,11 @@ const saveDraftToLocalStorage = () => {
 
 watch([formData, itineraryRows], () => {
   if (isFetching.value) return; // อย่าเพิ่งเซฟตอนกำลังโหลดข้อมูลจากเซิร์ฟเวอร์
-  
+
   if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
   autoSaveTimeout = setTimeout(() => {
     saveDraftToLocalStorage();
-  }, 3000); 
+  }, 3000);
 }, { deep: true });
 
 const goBack = () => { router.push('/') }
@@ -537,11 +558,11 @@ const autoSelectMonths = () => {
   formData.value.trip_pricing_data.forEach(round => {
     if (round.start_date) {
       const parts = round.start_date.split('-');
-      if(parts.length === 3 && parts[0].length >= 4){
-         const date = new Date(parts[0], parts[1] - 1, parts[2]);
-         if (!isNaN(date.getTime())) {
-           selectedMonthIndices.add(date.getMonth());
-         }
+      if (parts.length === 3 && parts[0].length >= 4) {
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (!isNaN(date.getTime())) {
+          selectedMonthIndices.add(date.getMonth());
+        }
       }
     }
   });
@@ -554,7 +575,7 @@ const autoSelectMonths = () => {
   const matchedIds = [];
   selectedMonthIndices.forEach(monthIdx => {
     const targetMonthName = fullThaiMonths[monthIdx];
-    const foundMonth = monthsList.value.find(m => 
+    const foundMonth = monthsList.value.find(m =>
       m.name.includes(targetMonthName) || targetMonthName.includes(m.name)
     );
     if (foundMonth) {
@@ -580,7 +601,7 @@ const autoCalculateEndDate = (roundIndex) => {
   // 🟢 เลิกลบ start_date ทิ้ง เพื่อให้ช่อง input ยังแสดงวันที่ที่เลือก
   if (!days || days <= 0) {
     showDateAlert.value = true;
-    round.end_date = ''; 
+    round.end_date = '';
     autoSelectMonths();
     setTimeout(() => { showDateAlert.value = false; }, 5000);
     return;
@@ -590,7 +611,7 @@ const autoCalculateEndDate = (roundIndex) => {
   const parts = round.start_date.split('-');
   if (parts.length === 3) {
     const yearStr = parts[0];
-    
+
     // ถ้าผู้ใช้กำลังพิมพ์ปี (เช่น 20 หรือ 202) อย่าเพิ่งคำนวณ ป้องกันบราวเซอร์ค้างจากลูปมหาศาล
     if (yearStr.length < 4) {
       round.end_date = '';
@@ -600,8 +621,8 @@ const autoCalculateEndDate = (roundIndex) => {
     const monthStr = parts[1];
     const dayStr = parts[2];
 
-    const start = new Date(yearStr, monthStr - 1, dayStr); 
-    
+    const start = new Date(yearStr, monthStr - 1, dayStr);
+
     if (isNaN(start.getTime())) {
       round.end_date = '';
       return;
@@ -609,17 +630,17 @@ const autoCalculateEndDate = (roundIndex) => {
 
     // บวกจำนวนวัน (ลบ 1 เพราะนับวันเริ่มต้นเป็นวันที่ 1 ด้วย)
     start.setDate(start.getDate() + (days - 1));
-    
+
     // จัดรูปแบบกลับเป็น YYYY-MM-DD
     const year = start.getFullYear();
     const month = String(start.getMonth() + 1).padStart(2, '0');
     const day = String(start.getDate()).padStart(2, '0');
-    
+
     round.end_date = `${year}-${month}-${day}`;
   } else {
     round.end_date = '';
   }
-  
+
   autoSelectMonths();
 };
 
@@ -627,7 +648,7 @@ const autoCalculateEndDate = (roundIndex) => {
 // 🟢 2. Watcher คอยจัดการแถว Itinerary และอัปเดตวันกลับเมื่อเปลี่ยนจำนวนวัน
 watch(() => formData.value.trip_days, (newDays) => {
   const targetDays = Number(newDays) || 0;
-  
+
   // จัดการแถวตารางแผนการเดินทาง
   const currentRows = itineraryRows.value.length;
   if (targetDays > currentRows) {
@@ -698,19 +719,19 @@ const fetchMasterData = async () => {
   loadingAirlines.value = true; loadingDestinations.value = true; loadingFestivals.value = true; loadingMonths.value = true; loadingPricingCategories.value = true;
   try {
     const [airRes, destRes, festRes, monthRes, priceCatRes] = await Promise.all([
-     publicApi.get('/airlines'), publicApi.get('/taxonomy-terms/travel_locations'),
+      publicApi.get('/airlines'), publicApi.get('/taxonomy-terms/travel_locations'),
       secureApi.get('/taxonomy-terms/festival'), secureApi.get('/taxonomy-terms/month'),
       secureApi.get('/taxonomy-terms/itinerary_pricing_category')
     ])
     if (airRes.data) airlinesList.value = airRes.data.map(item => ({ value: item.airline_key, label: item.airline_name }))
     if (destRes.data?.success) destinationsList.value = destRes.data.items
     if (festRes.data?.success) festivalsList.value = festRes.data.items
-    
+
     if (monthRes.data?.success) {
       // 🟢 บล็อกเดือน "เมษายน" ไม่ให้แก้ไข/ลบ
       monthsList.value = monthRes.data.items.map(month => {
         if (month.name.includes('เมษายน')) {
-          return { ...month, disabled: true } 
+          return { ...month, disabled: true }
         }
         return month;
       });
@@ -725,10 +746,10 @@ const fetchMasterData = async () => {
 const fetchTourDetail = async () => {
   isFetching.value = true; errorMessage.value = ''
   try {
-   const response = await publicApi.get(`/tours/${tourId}`) 
+    const response = await publicApi.get(`/tours/${tourId}`)
     if (response.data && response.data.success) {
       const tour = response.data.data
-      
+
       formData.value.title = tour.title || ''
       formData.value.trip_code = tour.trip_code || ''
       formData.value.status = tour.status || 'draft'
@@ -757,8 +778,8 @@ const fetchTourDetail = async () => {
       formData.value.rank_math_description = tour.rank_math_description || ''
       formData.value.rank_math_focus_keyword = tour.rank_math_focus_keyword || ''
 
-      
-      
+
+
       formData.value.destination_ids = Array.isArray(tour.destination_ids) ? tour.destination_ids : []
       formData.value.festival_ids = Array.isArray(tour.festival_ids) ? tour.festival_ids : []
       formData.value.month_ids = Array.isArray(tour.month_ids) ? tour.month_ids : []
@@ -770,18 +791,43 @@ const fetchTourDetail = async () => {
 
       if (tour.trip_pricing_data) {
         const rawPricing = typeof tour.trip_pricing_data === 'string' ? JSON.parse(tour.trip_pricing_data) : tour.trip_pricing_data
-        formData.value.trip_pricing_data = rawPricing.map(round => ({
-          start_date: round.start_date || '', end_date: round.end_date || '',
-          max_pax: round.max_pax || '', 
-          prices: (round.prices && round.prices.length > 0) ? round.prices : [{ category: '', amount: '' }]
-        }))
+
+        formData.value.trip_pricing_data = rawPricing.map(round => {
+          // กำหนดโครงสร้างบังคับให้มี พักคู่ และ พักเดี่ยว เสมอ
+          let defaultPrices = [
+            { category: 'พักคู่', amount: '' },
+            { category: 'พักเดี่ยว', amount: '' }
+          ];
+
+          // เอาข้อมูลราคาจากฐานข้อมูล (ถ้ามี) มาจับคู่ใส่ใน defaultPrices
+          if (round.prices && round.prices.length > 0) {
+            round.prices.forEach(p => {
+              const matched = defaultPrices.find(dp => dp.category === p.category);
+              if (matched) matched.amount = p.amount;
+            });
+          }
+
+          return {
+            start_date: round.start_date || '',
+            end_date: round.end_date || '',
+            max_pax: round.max_pax || '',
+            prices: defaultPrices // ใช้โครงสร้างที่เราบังคับไว้
+          }
+        })
       } else {
-        formData.value.trip_pricing_data = [{ start_date: '', end_date: '', max_pax: '', prices: [{ category: '', amount: '' }] }]
+        // กรณีเป็นทัวร์ใหม่ที่ยังไม่มีราคา
+        formData.value.trip_pricing_data = [{
+          start_date: '', end_date: '', max_pax: '',
+          prices: [
+            { category: 'พักคู่', amount: '' },
+            { category: 'พักเดี่ยว', amount: '' }
+          ]
+        }]
       }
 
       if (tour.tour_schedule_details) parseItineraryFromHtml(tour.tour_schedule_details)
       else itineraryRows.value = []
-      
+
     } else {
       errorMessage.value = "ไม่พบข้อมูลทัวร์ที่ระบุ"
     }
@@ -791,12 +837,13 @@ const fetchTourDetail = async () => {
   } finally {
     isFetching.value = false
   }
+
 }
 
 onMounted(async () => {
   await fetchMasterData()
   await fetchTourDetail()
-  
+
   // 🟢 ตรวจสอบข้อมูล Draft (Auto-Save)
   setTimeout(() => {
     const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -805,17 +852,17 @@ onMounted(async () => {
         const draft = JSON.parse(draftStr);
         if (draft && draft.formData && (draft.formData.title || draft.formData.trip_code)) {
           // ตรวจสอบว่า Draft เป็นของทัวร์นี้หรือไม่
-          if(draft.formData.title !== formData.value.title || draft.formData.trip_code !== formData.value.trip_code) {
-             const userWantsToRestore = window.confirm('💡 ระบบพบข้อมูลที่แก้ไขค้างไว้ล่าสุด (อาจเกิดจากเว็บค้างหรือเด้งออก)\n\nคุณต้องการ "กู้คืนข้อมูล" กลับมาหรือไม่?\n\n*หมายเหตุ: ไฟล์รูปภาพและ PDF จะต้องเลือกใหม่อีกครั้ง');
-             if (userWantsToRestore) {
-               formData.value = draft.formData;
-               if (draft.itineraryRows) itineraryRows.value = draft.itineraryRows;
-             } else {
-               localStorage.removeItem(DRAFT_STORAGE_KEY);
-             }
+          if (draft.formData.title !== formData.value.title || draft.formData.trip_code !== formData.value.trip_code) {
+            const userWantsToRestore = window.confirm('💡 ระบบพบข้อมูลที่แก้ไขค้างไว้ล่าสุด (อาจเกิดจากเว็บค้างหรือเด้งออก)\n\nคุณต้องการ "กู้คืนข้อมูล" กลับมาหรือไม่?\n\n*หมายเหตุ: ไฟล์รูปภาพและ PDF จะต้องเลือกใหม่อีกครั้ง');
+            if (userWantsToRestore) {
+              formData.value = draft.formData;
+              if (draft.itineraryRows) itineraryRows.value = draft.itineraryRows;
+            } else {
+              localStorage.removeItem(DRAFT_STORAGE_KEY);
+            }
           }
         }
-      } catch(e) {
+      } catch (e) {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
       }
     }
@@ -825,7 +872,17 @@ onMounted(async () => {
 // ---------------------------------------------------------------------
 // PRICING HELPERS & DUPLICATE MODAL
 // ---------------------------------------------------------------------
-const addPricingRound = () => { formData.value.trip_pricing_data.push({ start_date: '', end_date: '', max_pax: '', prices: [{ category: '', amount: '' }] }) }
+const addPricingRound = () => {
+  formData.value.trip_pricing_data.push({
+    start_date: '',
+    end_date: '',
+    max_pax: '',
+    prices: [
+      { category: 'พักคู่', amount: '' },
+      { category: 'พักเดี่ยว', amount: '' }
+    ]
+  })
+}
 const removePricingRound = (i) => { formData.value.trip_pricing_data.splice(i, 1) }
 const addPriceCategory = (ri) => { formData.value.trip_pricing_data[ri].prices.push({ category: '', amount: '' }) }
 const removePriceCategory = (ri, pi) => { formData.value.trip_pricing_data[ri].prices.splice(pi, 1) }
@@ -884,7 +941,7 @@ const sortByPrice = () => {
 // FILE & SUBMIT
 // ---------------------------------------------------------------------
 const onPdfChange = (e) => { pdfFile.value = e.target.files?.[0] || null }
-const onFeaturedImageChange = (e) => { 
+const onFeaturedImageChange = (e) => {
   const file = e.target.files?.[0] || null
   featuredImageFile.value = file
   if (file) featuredImagePreview.value = URL.createObjectURL(file)
@@ -911,7 +968,7 @@ const convertToWebP = (file, quality = 1.0) => {
             const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp"
             resolve(new File([blob], newFileName, { type: 'image/webp' }))
           } else reject(new Error('แปลงรูปไม่สำเร็จ'))
-        }, 'image/webp', quality) 
+        }, 'image/webp', quality)
       }
       img.onerror = (error) => reject(error)
     }
@@ -922,14 +979,14 @@ const convertToWebP = (file, quality = 1.0) => {
 const uploadTourAssets = async () => {
   const form = new FormData()
   if (pdfFile.value) form.append('pdf', pdfFile.value)
-  
+
   if (featuredImageFile.value) {
     uploadProgressText.value = 'กำลังแปลงรูปเป็น WebP...'
     const webpFeatured = await convertToWebP(featuredImageFile.value, 1.0)
     form.append('featuredImage', webpFeatured)
   }
 
-  if (!pdfFile.value && !featuredImageFile.value) return null 
+  if (!pdfFile.value && !featuredImageFile.value) return null
 
   uploadProgressText.value = 'กำลังอัปโหลดไฟล์...'
   const res = await secureApi.post('/upload-tour-assets', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 })
@@ -942,12 +999,12 @@ const updateTourData = async () => {
   const payload = JSON.parse(JSON.stringify(formData.value))
   payload.tour_schedule_details = generateItineraryHtml()
   payload.overview = payload.wp_travel_overview;
-  
+
   // นำตัวเลขประกอบกลับให้ WP
   payload.trip_days_nights = `${payload.trip_days || 0} วัน ${payload.trip_nights || 0} คืน`
   payload.trip_price = lowestPrice.value;
 
-  
+
   payload.trip_pricing_data = (payload.trip_pricing_data || [])
     .map(round => ({
       start_date: round.start_date || null, end_date: round.end_date || null, max_pax: round.max_pax || 0,
@@ -967,10 +1024,10 @@ const updateTourData = async () => {
     if (response.data?.success) {
       successMessage.value = 'บันทึกการแก้ไขสำเร็จ!'
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      
+
       // 🟢 ล้างข้อมูล Draft เมื่อบันทึกเข้าเซิร์ฟเวอร์เสร็จสมบูรณ์
       localStorage.removeItem(DRAFT_STORAGE_KEY);
-      
+
       setTimeout(() => successMessage.value = '', 3000)
     } else {
       errorMessage.value = response.data?.message || 'เกิดข้อผิดพลาดในการอัปเดต'
@@ -988,70 +1045,313 @@ const updateTourData = async () => {
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
 /* --- Global & Variables --- */
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 .tour-admin-container {
-  --color-primary: #cc0000; --color-secondary: #1a1a1a; --color-success: #16a34a; --color-white: #ffffff;
-  --color-bg: #f8fafc; --color-border: #e2e8f0; --color-text: #1e293b; --color-text-muted: #64748b;
-  font-family: 'Kanit', sans-serif; background-color: var(--color-bg); color: var(--color-text); min-height: 100vh; padding: 30px; max-width: 1200px; margin: 0 auto;
+  --color-primary: #cc0000;
+  --color-secondary: #1a1a1a;
+  --color-success: #16a34a;
+  --color-white: #ffffff;
+  --color-bg: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  font-family: 'Kanit', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* --- Header --- */
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--color-primary); padding-bottom: 15px; }
-.page-title { font-size: 1.8rem; font-weight: 600; color: var(--color-secondary); margin: 0; }
-.page-subtitle { color: var(--color-text-muted); margin: 8px 0 0; font-weight: 300; }
-.state-container { text-align: center; padding: 50px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: var(--color-text-muted); font-size: 1.1rem; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 15px;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--color-text-muted);
+  margin: 8px 0 0;
+  font-weight: 300;
+}
+
+.state-container {
+  text-align: center;
+  padding: 50px;
+  background: white;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
 
 /* --- Forms & Grid --- */
-.modern-form { display: flex; flex-direction: column; gap: 25px; }
-.form-section { background: var(--color-white); border-radius: 12px; padding: 30px; border: 1px solid var(--color-border); }
-.section-title { font-size: 1.25rem; font-weight: 600; color: var(--color-secondary); margin: 0 0 25px; display: flex; align-items: center; gap: 12px; }
-.section-title .number { background: var(--color-primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
-.section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 10px; }
-.section-header-flex .section-title { margin-bottom: 0; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.full-width { grid-column: 1 / -1; }
-.form-group label { display: block; font-weight: 500; margin-bottom: 8px; color: var(--color-secondary); }
-.required { color: var(--color-primary); }
-.form-control { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Kanit', sans-serif; font-size: 1rem; transition: 0.2s; }
-.form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(204,0,0,0.1); }
-.readonly-input { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
-.status-select.publish { color: #16a34a; background-color: #f0fdf4; }
-.status-select.draft { color: #d97706; background-color: #fffbeb; }
-.auto-calc-group { display: flex; align-items: center; gap: 12px; }
-.text-center { text-align: center; }
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-section {
+  background: var(--color-white);
+  border-radius: 12px;
+  padding: 30px;
+  border: 1px solid var(--color-border);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin: 0 0 25px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title .number {
+  background: var(--color-primary);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-header-flex .section-title {
+  margin-bottom: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--color-secondary);
+}
+
+.required {
+  color: var(--color-primary);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+}
+
+.readonly-input {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.status-select.publish {
+  color: #16a34a;
+  background-color: #f0fdf4;
+}
+
+.status-select.draft {
+  color: #d97706;
+  background-color: #fffbeb;
+}
+
+.auto-calc-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-center {
+  text-align: center;
+}
 
 /* --- SEO Box --- */
-.seo-section { border-left: 4px solid #2563eb; background: #f8fafc; }
+.seo-section {
+  border-left: 4px solid #2563eb;
+  background: #f8fafc;
+}
 
 /* --- Quill Editor --- */
-.quill-wrapper { background: white; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden; }
-.quill-wrapper :deep(.ql-container.ql-snow) { min-height: 200px; font-family: 'Kanit', sans-serif; font-size: 1.05rem; border: none; }
-.quill-wrapper :deep(.ql-toolbar.ql-snow) { border-top: none; border-left: none; border-right: none; border-bottom: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Kanit', sans-serif; }
+.quill-wrapper {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  overflow: hidden;
+}
+
+.quill-wrapper :deep(.ql-container.ql-snow) {
+  min-height: 200px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 1.05rem;
+  border: none;
+}
+
+.quill-wrapper :deep(.ql-toolbar.ql-snow) {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-family: 'Kanit', sans-serif;
+}
 
 /* --- Multiselect --- */
-.modern-multiselect :deep(.multiselect-wrapper) { min-height: 48px; border-radius: 8px; border-color: var(--color-border); }
-.modern-multiselect :deep(.multiselect-is-active) { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1); }
-.modern-multiselect :deep(.multiselect-tag) { background: var(--color-primary); border-radius: 4px; font-weight: 400; }
+.modern-multiselect :deep(.multiselect-wrapper) {
+  min-height: 48px;
+  border-radius: 8px;
+  border-color: var(--color-border);
+}
+
+.modern-multiselect :deep(.multiselect-is-active) {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+}
+
+.modern-multiselect :deep(.multiselect-tag) {
+  background: var(--color-primary);
+  border-radius: 4px;
+  font-weight: 400;
+}
 
 /* --- Itinerary Builder --- */
-.itinerary-builder { border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
-.itinerary-header { background: #f8fafc; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); }
-.itinerary-table-responsive { overflow-x: auto; }
-.itinerary-table { width: 100%; border-collapse: collapse; min-width: 700px; }
-.itinerary-table th, .itinerary-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-.itinerary-table th { background-color: #f1f5f9; text-align: left; font-size: 0.95rem; color: var(--color-secondary); font-weight: 500; }
-.day-badge { display: inline-flex; width: 32px; height: 32px; border-radius: 50%; background-color: var(--color-primary); color: #fff; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; }
-.icon-select { padding-right: 20px; }
+.itinerary-builder {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.itinerary-header {
+  background: #f8fafc;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.itinerary-table-responsive {
+  overflow-x: auto;
+}
+
+.itinerary-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.itinerary-table th,
+.itinerary-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.itinerary-table th {
+  background-color: #f1f5f9;
+  text-align: left;
+  font-size: 0.95rem;
+  color: var(--color-secondary);
+  font-weight: 500;
+}
+
+.day-badge {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.icon-select {
+  padding-right: 20px;
+}
 
 /* --- Pricing & Files --- */
-.pricing-rounds-container { display: flex; flex-direction: column; gap: 20px; }
-.pricing-round-card { border: 1px solid var(--color-border); border-radius: 12px; padding: 25px; background-color: #f8fafc; border-left: 4px solid var(--color-success); }
-.round-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); }
-.price-tiers-list { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--color-border); }
+.pricing-rounds-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pricing-round-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 25px;
+  background-color: #f8fafc;
+  border-left: 4px solid var(--color-success);
+}
+
+.round-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.price-tiers-list {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--color-border);
+}
+
 .price-row-grid {
   display: grid;
- 
-  grid-template-columns: 30px 1fr 1fr auto; 
+
+  grid-template-columns: 30px 1fr 1fr auto;
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
@@ -1060,55 +1360,326 @@ const updateTourData = async () => {
 .drag-handle:active {
   cursor: grabbing !important;
 }
-.file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
-.form-control-file { position: absolute; font-size: 100px; opacity: 0; right: 0; top: 0; cursor: pointer; height: 100%; width: 100%; }
-.file-custom-label { display: block; width: 100%; padding: 14px 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center; cursor: pointer; transition: all 0.2s; }
-.file-custom-label:hover { border-color: var(--color-primary); color: var(--color-primary); background: #fff5f5; }
-.current-file-preview, .current-image-preview { margin-bottom: 15px; padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; }
-.preview-img { max-width: 100%; height: auto; max-height: 200px; border-radius: 8px; object-fit: cover; }
+
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+.form-control-file {
+  position: absolute;
+  font-size: 100px;
+  opacity: 0;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
+}
+
+.file-custom-label {
+  display: block;
+  width: 100%;
+  padding: 14px 15px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-custom-label:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #fff5f5;
+}
+
+.current-file-preview,
+.current-image-preview {
+  margin-bottom: 15px;
+  padding: 15px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.preview-img {
+  max-width: 100%;
+  height: auto;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+}
 
 /* --- Buttons & Actions --- */
-.form-actions { display: flex; justify-content: flex-end; gap: 15px; padding: 20px 30px; background: white; border-radius: 12px; border: 1px solid var(--color-border); box-shadow: 0 -4px 10px rgba(0,0,0,0.02); }
-.sticky-bottom { position: sticky; bottom: 20px; z-index: 100; }
-.btn { padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: 'Kanit', sans-serif; border: 1px solid transparent; transition: 0.2s; }
-.btn-lg { padding: 12px 30px; font-size: 1.05rem; }
-.btn-sm { padding: 8px 16px; font-size: 0.9rem; }
-.btn-xs { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
-.submit-btn { min-width: 250px; }
-.btn-primary { background: var(--color-primary); color: white; }
-.btn-primary:hover:not(:disabled) { background: #a30000; }
-.btn-success { background: var(--color-success); color: white; }
-.btn-success:hover { background: #15803d; }
-.btn-outline-primary { border: 1px solid #2563eb; color: #2563eb; background: white; }
-.btn-outline-primary:hover { background: #eff6ff; }
-.btn-outline-secondary { border: 1px solid #cbd5e1; color: #475569; background: white; }
-.btn-outline-secondary:hover { background: #f8fafc; }
-.btn-outline-danger { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
-.btn-outline-danger:hover { background: #fee2e2; }
-.btn-icon-danger { background: none; border: none; padding: 6px 12px; cursor: pointer; color: var(--color-primary); font-weight: 500; border-radius: 30px;}
-.btn-icon-danger:hover { background-color: #fee2e2; }
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 20px 30px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.sticky-bottom {
+  position: sticky;
+  bottom: 20px;
+  z-index: 100;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Kanit', sans-serif;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+.btn-lg {
+  padding: 12px 30px;
+  font-size: 1.05rem;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn-xs {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.submit-btn {
+  min-width: 250px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #a30000;
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #15803d;
+}
+
+.btn-outline-primary {
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+}
+
+.btn-outline-primary:hover {
+  background: #eff6ff;
+}
+
+.btn-outline-secondary {
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  background: white;
+}
+
+.btn-outline-secondary:hover {
+  background: #f8fafc;
+}
+
+.btn-outline-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.btn-outline-danger:hover {
+  background: #fee2e2;
+}
+
+.btn-icon-danger {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: 500;
+  border-radius: 30px;
+}
+
+.btn-icon-danger:hover {
+  background-color: #fee2e2;
+}
 
 /* --- Alerts & Modals --- */
-.modern-alert-banner { display: flex; align-items: center; background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
-.alert-text { flex-grow: 1; font-size: 0.9rem; line-height: 1.4; }
-.close-alert-btn { background: none; border: none; color: #92400e; font-size: 1.2rem; cursor: pointer; padding: 0 8px; opacity: 0.7; }
-.close-alert-btn:hover { opacity: 1; }
+.modern-alert-banner {
+  display: flex;
+  align-items: center;
+  background-color: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
 
-.alert { position: fixed; top: 25px; right: 25px; padding: 16px 25px; border-radius: 8px; font-weight: 500; z-index: 1000; display: flex; align-items: center; gap: 10px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-.alert-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; }
-.alert-danger { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-left: 5px solid #ef4444; }
-.alert-icon { font-size: 1.5rem; margin-right: 12px; }
+.alert-text {
+  flex-grow: 1;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
 
-.custom-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.custom-modal-box { background: white; width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-.modal-header { padding: 20px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; background: #f8fafc; }
-.modal-header h3 { margin: 0; font-size: 1.15rem; color: var(--color-secondary); }
-.btn-close { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8; }
-.modal-body { padding: 25px 20px; text-align: center; }
-.counter-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 10px auto; }
-.btn-counter { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #cbd5e1; background: #f1f5f9; font-size: 1.2rem; cursor: pointer; }
-.count-input { width: 80px; text-align: center; font-size: 1.2rem; border: none; border-bottom: 2px solid var(--color-primary); border-radius: 0; padding: 5px; }
-.modal-footer { padding: 15px 20px; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; }
+.close-alert-btn {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 8px;
+  opacity: 0.7;
+}
 
-@media (max-width: 992px) { .grid-col-2 { grid-template-columns: 1fr; } }
+.close-alert-btn:hover {
+  opacity: 1;
+}
+
+.alert {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  padding: 16px 25px;
+  border-radius: 8px;
+  font-weight: 500;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 350px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.alert-success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-left: 5px solid #16a34a;
+}
+
+.alert-danger {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #ef4444;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.custom-modal-box {
+  background: white;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--color-secondary);
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.modal-body {
+  padding: 25px 20px;
+  text-align: center;
+}
+
+.counter-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin: 10px auto;
+}
+
+.btn-counter {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.count-input {
+  width: 80px;
+  text-align: center;
+  font-size: 1.2rem;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0;
+  padding: 5px;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+@media (max-width: 992px) {
+  .grid-col-2 {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
