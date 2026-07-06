@@ -101,9 +101,16 @@ const handleLogin = async () => {
   errorMessage.value = ''
 
   try {
-    
-  
-    if (username.value === 'admin' && password.value === 'admin') {
+    // 🟢 สร้างตัวแปรเก็บข้อมูล User & Password ทั้ง 2 คน
+    const validUsers = {
+      'aummarawadee01': 'it7dVLaU^Es0LPUd8e)dN%wX',
+      'nongnum05': 'yvYr$FzmfEA(^#GGrmCl&TG&' 
+    }
+
+    // 🟢 เช็คว่ามี username ที่พิมพ์มาในระบบไหม และ password ตรงกันหรือไม่
+    if (validUsers[username.value] && validUsers[username.value] === password.value) {
+      
+      // ล็อกอินผ่าน: เก็บ Token เพื่อเข้าสู่ระบบตามปกติ
       localStorage.setItem('admin_token', 'logged_in_token_xyz')
       
       // หน่วงเวลาเล็กน้อยให้ดูมีมิติการโหลด

@@ -9,9 +9,9 @@
         <button @click="fetchCategories" class="btn btn-outline-secondary" :disabled="isLoading">
           🔄 โหลดข้อมูลใหม่
         </button>
-        <button @click="toggleForm" class="btn btn-primary" :class="{ 'btn-cancel': showAddForm }">
+        <!-- <button @click="toggleForm" class="btn btn-primary" :class="{ 'btn-cancel': showAddForm }">
           {{ showAddForm ? '❌ ปิดฟอร์ม' : '+ เพิ่มหมวดหมู่ราคา' }}
-        </button>
+        </button> -->
       </div>
     </header>
 
@@ -67,7 +67,7 @@
               <th width="25%">ชื่อหมวดหมู่ราคา (Name)</th>
               <th width="35%">รายละเอียด (Description)</th>
               <th width="120" class="text-center">จำนวนทัวร์</th>
-              <th width="100" class="text-center">จัดการ</th>
+              <!-- <th width="100" class="text-center">จัดการ</th> -->
             </tr>
           </thead>
           <tbody>
@@ -82,12 +82,12 @@
                   {{ cat.count }} ทัวร์
                 </button>
               </td>
-              <td class="text-center" data-label="จัดการ">
+              <!-- <td class="text-center" data-label="จัดการ">
                 <div class="action-flex">
                   <button @click="openEditForm(cat)" class="btn-icon btn-edit" title="แก้ไข">✏️</button>
                   <button @click="confirmDelete(cat.id, cat.name)" class="btn-icon btn-delete" title="ลบ">🗑️</button>
                 </div>
-              </td>
+              </td> -->
             </tr>
           </tbody>
         </table>

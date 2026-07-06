@@ -99,27 +99,20 @@
             />
           </div>
 
-          <!-- <div class="form-group">
-            <label>เดือนที่เดินทาง (Month Categories)</label>
-            <Multiselect
-              v-model="formData.month_ids" :options="monthsList" mode="tags" :searchable="true"
-              valueProp="id" label="name" :disabled="loadingMonths" class="modern-multiselect"
-            />
-          </div> -->
           <div class="form-group">
-  <label>เดือนที่เดินทาง (Month Categories) <span style="color: #d97706; font-size: 0.85rem;">(อัปเดตอัตโนมัติตามวันเดินทาง)</span></label>
-  <Multiselect 
-    v-model="formData.month_ids" 
-    :options="monthsList" 
-    mode="tags" 
-    :searchable="true" 
-    valueProp="id" 
-    label="name" 
-    placeholder="ระบบจะเลือกเดือนให้อัตโนมัติ..." 
-    :disabled="loadingMonths" 
-    class="modern-multiselect" 
-  />
-</div>
+            <label>เดือนที่เดินทาง (Month Categories) <span style="color: #d97706; font-size: 0.85rem;">(อัปเดตอัตโนมัติตามวันเดินทาง)</span></label>
+            <Multiselect 
+              v-model="formData.month_ids" 
+              :options="monthsList" 
+              mode="tags" 
+              :searchable="true" 
+              valueProp="id" 
+              label="name" 
+              placeholder="ระบบจะเลือกเดือนให้อัตโนมัติ..." 
+              :disabled="loadingMonths" 
+              class="modern-multiselect" 
+            />
+          </div>
         </div>
       </section>
 
@@ -150,26 +143,17 @@
             </div>
 
             <div class="form-grid grid-col-2">
-              <!-- <div class="form-group">
+              <div class="form-group">
                 <label>วันที่ไป (Start Date)</label>
-                <input type="date" v-model="round.start_date" class="form-control" @change="round.end_date = ''" />
+                <input type="date" v-model="round.start_date" :min="today" class="form-control"
+                  @change="autoCalculateEndDate(roundIndex)" />
               </div>
+
               <div class="form-group">
                 <label>วันที่กลับ (End Date)</label>
-                <input type="date" v-model="round.end_date" class="form-control" :disabled="!round.start_date" />
-              </div> -->
-
-              <div class="form-group">
-  <label>วันที่ไป (Start Date)</label>
-  <input type="date" v-model="round.start_date" :min="today" class="form-control"
-    @change="autoCalculateEndDate(roundIndex)" />
-</div>
-
-<div class="form-group">
-  <label>วันที่กลับ (End Date)</label>
-  <input type="date" v-model="round.end_date" class="form-control readonly-input" 
-    readonly placeholder="คำนวณอัตโนมัติ" />
-</div>
+                <input type="date" v-model="round.end_date" class="form-control readonly-input" 
+                  readonly placeholder="คำนวณอัตโนมัติ" />
+              </div>
               
               <div class="form-group">
                 <label>จำนวนรับได้สูงสุด (Max Pax.)</label>
@@ -183,25 +167,45 @@
             </div>
 
             <div class="price-tiers-list">
-              <label class="inner-label">ตารางราคา</label>
-              <div v-for="(price, priceIndex) in round.prices" :key="priceIndex" class="price-row-grid">
-                
-                <select v-model="price.category" class="form-control form-control-sm form-select" :disabled="loadingPricingCategories">
-                  <option value="" disabled>-- เลือกหมวดหมู่ราคา --</option>
-                  <option v-for="cat in pricingCategoriesList" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
-                </select>
+  <label class="inner-label">ตารางราคา</label>
+  
+  <draggable 
+    v-model="round.prices" 
+    item-key="category" 
+    handle=".drag-handle" 
+    animation="200"
+    :disabled="round.prices.length <= 1" 
+  >
+    <template #item="{ element: price, index: priceIndex }">
+      <div class="price-row-grid">
+        
+        <span class="drag-handle" 
+              :class="{ 'disabled-handle': round.prices.length <= 1 }"
+              :title="round.prices.length > 1 ? 'ลากเพื่อเปลี่ยนลำดับ' : ''">
+          ☰
+        </span>
 
-                <input type="text" 
-                  :value="price.amount ? Number(price.amount).toLocaleString('th-TH') : ''"
-                  @input="onPriceInput($event, roundIndex, priceIndex)"
-                  placeholder="ราคา (เช่น 89,900)" class="form-control form-control-sm price-input" />
+      <select v-model="price.category" class="form-control form-control-sm form-select" disabled>
+  <option value="" disabled>-- เลือกหมวดหมู่ราคา --</option>
+  <option v-for="cat in pricingCategoriesList" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
+</select>
 
-                <button type="button" @click="removePriceCategory(roundIndex, priceIndex)" class="btn btn-outline-danger btn-xs">ลบ</button>
-              </div>
-              <button type="button" @click="addPriceCategory(roundIndex)" class="btn btn-outline-success btn-xs mt-3 full-width-btn">
-                ➕ เพิ่มหมวดหมู่ราคา
-              </button>
-            </div>
+        <input type="text" 
+          :value="price.amount ? Number(price.amount).toLocaleString('th-TH') : ''"
+          @input="onPriceInput($event, roundIndex, priceIndex)"
+          placeholder="ราคา (เช่น 89,900)" class="form-control form-control-sm price-input" />
+
+        <button type="button" @click="removePriceCategory(roundIndex, priceIndex)" class="btn btn-outline-danger btn-xs">ลบ</button>
+        
+      </div>
+    </template>
+  </draggable>
+
+
+  <!-- <button type="button" @click="addPriceCategory(roundIndex)" class="btn btn-outline-success btn-xs mt-3 full-width-btn">
+    ➕ เพิ่มหมวดหมู่ราคา
+  </button> -->
+</div>
           </div>
         </div>
       </section>
@@ -229,13 +233,9 @@
         </div>
 
         <div class="form-group full-width itinerary-builder mt-4">
-          <!-- <div class="itinerary-header">
-            <label>แผนการเดินทางแบบย่อ</label>
-            <button type="button" @click="addItineraryRow" class="btn btn-success btn-xs">➕ เพิ่มวันที่</button>
-          </div> -->
           <div class="itinerary-header">
-  <label>แผนการเดินทางแบบย่อ (จำนวนวันจะสร้างอัตโนมัติตามที่ระบุไว้)</label>
-  </div>
+            <label>แผนการเดินทางแบบย่อ (จำนวนวันจะสร้างอัตโนมัติตามที่ระบุไว้)</label>
+          </div>
           <div class="itinerary-table-responsive">
             <table class="itinerary-table">
               <thead>
@@ -386,6 +386,17 @@
       </div>
     </transition>
 
+    <transition name="fade">
+      <div v-if="showDateAlert" class="modern-alert-banner">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-text">
+          <strong>ไม่สามารถคำนวณวันกลับได้!</strong> <br/>
+          กรุณาระบุ "ระยะเวลา (วัน/คืน)" ในส่วนข้อมูลทั่วไป (ข้อ 1) ให้เรียบร้อยก่อนเลือกวันเดินทาง
+        </div>
+        <button @click="showDateAlert = false" class="close-alert-btn">✕</button>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -397,6 +408,7 @@ import Multiselect from '@vueform/multiselect'
 import '@vueform/multiselect/themes/default.css'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import draggable from 'vuedraggable';
 
 const route = useRoute()
 const router = useRouter()
@@ -404,17 +416,15 @@ const tourId = route.params.id
 
 // 1. API สำหรับดึงข้อมูลมาแสดงผล (วิ่งไปหา WordPress)
 const publicApi = axios.create({
-  // เปลี่ยนให้ดึงโดเมนจากไฟล์ .env หรือจะพิมพ์ https://panda.co.th/wp-json/blupaper/v1 ลงไปตรงๆ เลยก็ได้
   baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
-// ตรวจสอบในไฟล์ src/views/TourList.vue และ TourDetail.vue
 const secureApi = axios.create({
-  // 🟢 เปลี่ยนจาก dev1.blupaperdev.com เป็น panda.co.th
   baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
   timeout: 60000
 })
+
 // ---------------------------------------------------------------------
 // DEFAULT FORM
 // ---------------------------------------------------------------------
@@ -450,6 +460,36 @@ const pricingCategoriesList = ref([]); const loadingPricingCategories = ref(fals
 
 const currentFeaturedImageUrl = ref('')
 const currentPdfUrl = ref('')
+
+const today = new Date().toISOString().split('T')[0]
+const showDateAlert = ref(false);
+
+// ---------------------------------------------------------------------
+// 🟢 AUTO-SAVE (LOCAL STORAGE) STATE
+// ---------------------------------------------------------------------
+const DRAFT_STORAGE_KEY = `panda_tour_draft_edit_${tourId}`;
+let autoSaveTimeout = null;
+
+const saveDraftToLocalStorage = () => {
+  try {
+    const draftData = {
+      formData: formData.value,
+      itineraryRows: itineraryRows.value
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+  } catch (err) {
+    console.warn('Auto-save failed:', err);
+  }
+};
+
+watch([formData, itineraryRows], () => {
+  if (isFetching.value) return; // อย่าเพิ่งเซฟตอนกำลังโหลดข้อมูลจากเซิร์ฟเวอร์
+  
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(() => {
+    saveDraftToLocalStorage();
+  }, 3000); 
+}, { deep: true });
 
 const goBack = () => { router.push('/') }
 
@@ -489,34 +529,100 @@ watch(computedTripSchedule, (newSchedule) => {
   formData.value.trip_schedule = newSchedule;
 }, { immediate: true });
 
+// 🟢 ฟังก์ชันดึงเดือนจากตารางราคามาเลือกใน Month Categories อัตโนมัติ
+const autoSelectMonths = () => {
+  if (!monthsList.value.length) return;
 
-// 🟢 1. ฟังก์ชันคำนวณวันที่กลับอัตโนมัติ (ป้องกัน Timezone Bug)
+  const selectedMonthIndices = new Set();
+  formData.value.trip_pricing_data.forEach(round => {
+    if (round.start_date) {
+      const parts = round.start_date.split('-');
+      if(parts.length === 3 && parts[0].length >= 4){
+         const date = new Date(parts[0], parts[1] - 1, parts[2]);
+         if (!isNaN(date.getTime())) {
+           selectedMonthIndices.add(date.getMonth());
+         }
+      }
+    }
+  });
+
+  const fullThaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+
+  const matchedIds = [];
+  selectedMonthIndices.forEach(monthIdx => {
+    const targetMonthName = fullThaiMonths[monthIdx];
+    const foundMonth = monthsList.value.find(m => 
+      m.name.includes(targetMonthName) || targetMonthName.includes(m.name)
+    );
+    if (foundMonth) {
+      matchedIds.push(foundMonth.id);
+    }
+  });
+
+  // อัปเดตช่องเดือนในฟอร์ม
+  formData.value.month_ids = matchedIds;
+};
+
+// 🟢 1. ฟังก์ชันคำนวณวันที่กลับอัตโนมัติ (ป้องกัน Timezone Bug และการแครช)
 const autoCalculateEndDate = (roundIndex) => {
   const round = formData.value.trip_pricing_data[roundIndex];
   const days = parseInt(formData.value.trip_days);
 
   if (!round.start_date) {
     round.end_date = '';
+    autoSelectMonths();
     return;
   }
 
+  // 🟢 เลิกลบ start_date ทิ้ง เพื่อให้ช่อง input ยังแสดงวันที่ที่เลือก
   if (!days || days <= 0) {
-    alert('กรุณาระบุ "จำนวนวัน" ในส่วนข้อมูลทั่วไปก่อนเลือกวันเดินทาง');
-    round.start_date = '';
+    showDateAlert.value = true;
+    round.end_date = ''; 
+    autoSelectMonths();
+    setTimeout(() => { showDateAlert.value = false; }, 5000);
     return;
   }
+  showDateAlert.value = false;
 
-  const [yearStr, monthStr, dayStr] = round.start_date.split('-');
-  const start = new Date(yearStr, monthStr - 1, dayStr); 
+  const parts = round.start_date.split('-');
+  if (parts.length === 3) {
+    const yearStr = parts[0];
+    
+    // ถ้าผู้ใช้กำลังพิมพ์ปี (เช่น 20 หรือ 202) อย่าเพิ่งคำนวณ ป้องกันบราวเซอร์ค้างจากลูปมหาศาล
+    if (yearStr.length < 4) {
+      round.end_date = '';
+      return;
+    }
+
+    const monthStr = parts[1];
+    const dayStr = parts[2];
+
+    const start = new Date(yearStr, monthStr - 1, dayStr); 
+    
+    if (isNaN(start.getTime())) {
+      round.end_date = '';
+      return;
+    }
+
+    // บวกจำนวนวัน (ลบ 1 เพราะนับวันเริ่มต้นเป็นวันที่ 1 ด้วย)
+    start.setDate(start.getDate() + (days - 1));
+    
+    // จัดรูปแบบกลับเป็น YYYY-MM-DD
+    const year = start.getFullYear();
+    const month = String(start.getMonth() + 1).padStart(2, '0');
+    const day = String(start.getDate()).padStart(2, '0');
+    
+    round.end_date = `${year}-${month}-${day}`;
+  } else {
+    round.end_date = '';
+  }
   
-  start.setDate(start.getDate() + (days - 1));
-  
-  const year = start.getFullYear();
-  const month = String(start.getMonth() + 1).padStart(2, '0');
-  const day = String(start.getDate()).padStart(2, '0');
-  
-  round.end_date = `${year}-${month}-${day}`;
+  autoSelectMonths();
 };
+
 
 // 🟢 2. Watcher คอยจัดการแถว Itinerary และอัปเดตวันกลับเมื่อเปลี่ยนจำนวนวัน
 watch(() => formData.value.trip_days, (newDays) => {
@@ -542,65 +648,11 @@ watch(() => formData.value.trip_days, (newDays) => {
   }
 });
 
-
-
-// 🟢 ฟังก์ชันดึงเดือนจากตารางราคามาเลือกใน Month Categories อัตโนมัติ
-const autoSelectMonths = () => {
-  if (!monthsList.value.length) return;
-
-  const selectedMonthIndices = new Set();
-  formData.value.trip_pricing_data.forEach(round => {
-    if (round.start_date) {
-      const date = new Date(round.start_date);
-      if (!isNaN(date.getTime())) {
-        selectedMonthIndices.add(date.getMonth());
-      }
-    }
-  });
-
-  const fullThaiMonths = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-  ];
-
-  const matchedIds = [];
-  selectedMonthIndices.forEach(monthIdx => {
-    const targetMonthName = fullThaiMonths[monthIdx];
-    const foundMonth = monthsList.value.find(m => 
-      m.name.includes(targetMonthName) || targetMonthName.includes(m.name)
-    );
-    if (foundMonth) {
-      matchedIds.push(foundMonth.id);
-    }
-  });
-
-  // อัปเดตช่องเดือนในฟอร์ม
-  formData.value.month_ids = matchedIds;
-};
-
-// 🟢 Watch เมื่อมีการเปลี่ยนวันที่ในตารางราคา ให้คำนวณเดือนใหม่ทันที
-watch(() => formData.value.trip_pricing_data, () => {
-  autoSelectMonths();
-}, { deep: true });
-
 // ---------------------------------------------------------------------
 // ITINERARY HELPERS
 // ---------------------------------------------------------------------
 const addItineraryRow = () => { itineraryRows.value.push({ day: itineraryRows.value.length + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' }) }
 const removeItineraryRow = (index) => { itineraryRows.value.splice(index, 1); itineraryRows.value.forEach((row, i) => { row.day = i + 1 }) }
-
-// 🟢 ออโต้เพิ่มจำนวนแถวของตารางตามค่า "วัน" ที่กรอก
-watch(() => formData.value.trip_days, (newDays) => {
-  const targetDays = Number(newDays) || 0;
-  const currentRows = itineraryRows.value.length;
-  if (targetDays > currentRows) {
-    for (let i = currentRows; i < targetDays; i++) {
-      itineraryRows.value.push({ day: i + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' });
-    }
-  } else if (targetDays > 0 && targetDays < currentRows) {
-    itineraryRows.value.splice(targetDays);
-  }
-});
 
 const generateItineraryHtml = () => {
   const getIcon = (type) => {
@@ -653,7 +705,17 @@ const fetchMasterData = async () => {
     if (airRes.data) airlinesList.value = airRes.data.map(item => ({ value: item.airline_key, label: item.airline_name }))
     if (destRes.data?.success) destinationsList.value = destRes.data.items
     if (festRes.data?.success) festivalsList.value = festRes.data.items
-    if (monthRes.data?.success) monthsList.value = monthRes.data.items
+    
+    if (monthRes.data?.success) {
+      // 🟢 บล็อกเดือน "เมษายน" ไม่ให้แก้ไข/ลบ
+      monthsList.value = monthRes.data.items.map(month => {
+        if (month.name.includes('เมษายน')) {
+          return { ...month, disabled: true } 
+        }
+        return month;
+      });
+    }
+
     if (priceCatRes.data?.success) pricingCategoriesList.value = priceCatRes.data.items.map(item => ({ value: item.name, label: item.name }))
   } catch (e) { console.error(e) } finally {
     loadingAirlines.value = false; loadingDestinations.value = false; loadingFestivals.value = false; loadingMonths.value = false; loadingPricingCategories.value = false;
@@ -694,6 +756,8 @@ const fetchTourDetail = async () => {
       formData.value.rank_math_title = tour.rank_math_title || ''
       formData.value.rank_math_description = tour.rank_math_description || ''
       formData.value.rank_math_focus_keyword = tour.rank_math_focus_keyword || ''
+
+      
       
       formData.value.destination_ids = Array.isArray(tour.destination_ids) ? tour.destination_ids : []
       formData.value.festival_ids = Array.isArray(tour.festival_ids) ? tour.festival_ids : []
@@ -732,31 +796,31 @@ const fetchTourDetail = async () => {
 onMounted(async () => {
   await fetchMasterData()
   await fetchTourDetail()
-})
-
-
-const fetchMonths = async () => {
-  loadingMonths.value = true
-  try {
-    const res = await publicApi.get('/taxonomy-terms/month')
-    if (res.data?.success) {
-      // 🟢 บล็อกเดือน "เมษายน" ไม่ให้แก้ไข/ลบ
-      monthsList.value = res.data.items.map(month => {
-        if (month.name.includes('เมษายน')) {
-          return { ...month, disabled: true } 
+  
+  // 🟢 ตรวจสอบข้อมูล Draft (Auto-Save)
+  setTimeout(() => {
+    const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (draftStr) {
+      try {
+        const draft = JSON.parse(draftStr);
+        if (draft && draft.formData && (draft.formData.title || draft.formData.trip_code)) {
+          // ตรวจสอบว่า Draft เป็นของทัวร์นี้หรือไม่
+          if(draft.formData.title !== formData.value.title || draft.formData.trip_code !== formData.value.trip_code) {
+             const userWantsToRestore = window.confirm('💡 ระบบพบข้อมูลที่แก้ไขค้างไว้ล่าสุด (อาจเกิดจากเว็บค้างหรือเด้งออก)\n\nคุณต้องการ "กู้คืนข้อมูล" กลับมาหรือไม่?\n\n*หมายเหตุ: ไฟล์รูปภาพและ PDF จะต้องเลือกใหม่อีกครั้ง');
+             if (userWantsToRestore) {
+               formData.value = draft.formData;
+               if (draft.itineraryRows) itineraryRows.value = draft.itineraryRows;
+             } else {
+               localStorage.removeItem(DRAFT_STORAGE_KEY);
+             }
+          }
         }
-        return month;
-      });
-      
-      // เรียกใช้ครั้งแรกหลังจากโหลดข้อมูล Master Data เสร็จ
-      autoSelectMonths(); 
+      } catch(e) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
     }
-  } catch (err) {
-    console.error(err)
-  } finally {
-    loadingMonths.value = false
-  }
-}
+  }, 1000);
+})
 
 // ---------------------------------------------------------------------
 // PRICING HELPERS & DUPLICATE MODAL
@@ -828,7 +892,7 @@ const onFeaturedImageChange = (e) => {
 }
 
 // 🟢 ฟังก์ชันแปลงรูปภาพเป็น WebP
-const convertToWebP = (file, quality = 0.8) => {
+const convertToWebP = (file, quality = 1.0) => {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/') || file.type === 'image/webp' || file.type === 'image/gif') return resolve(file)
 
@@ -861,7 +925,7 @@ const uploadTourAssets = async () => {
   
   if (featuredImageFile.value) {
     uploadProgressText.value = 'กำลังแปลงรูปเป็น WebP...'
-    const webpFeatured = await convertToWebP(featuredImageFile.value, 0.8)
+    const webpFeatured = await convertToWebP(featuredImageFile.value, 1.0)
     form.append('featuredImage', webpFeatured)
   }
 
@@ -881,6 +945,7 @@ const updateTourData = async () => {
   
   // นำตัวเลขประกอบกลับให้ WP
   payload.trip_days_nights = `${payload.trip_days || 0} วัน ${payload.trip_nights || 0} คืน`
+  payload.trip_price = lowestPrice.value;
 
   
   payload.trip_pricing_data = (payload.trip_pricing_data || [])
@@ -902,6 +967,10 @@ const updateTourData = async () => {
     if (response.data?.success) {
       successMessage.value = 'บันทึกการแก้ไขสำเร็จ!'
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      
+      // 🟢 ล้างข้อมูล Draft เมื่อบันทึกเข้าเซิร์ฟเวอร์เสร็จสมบูรณ์
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      
       setTimeout(() => successMessage.value = '', 3000)
     } else {
       errorMessage.value = response.data?.message || 'เกิดข้อผิดพลาดในการอัปเดต'
@@ -979,8 +1048,18 @@ const updateTourData = async () => {
 .pricing-round-card { border: 1px solid var(--color-border); border-radius: 12px; padding: 25px; background-color: #f8fafc; border-left: 4px solid var(--color-success); }
 .round-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); }
 .price-tiers-list { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--color-border); }
-.price-row-grid { display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+.price-row-grid {
+  display: grid;
+ 
+  grid-template-columns: 30px 1fr 1fr auto; 
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
+.drag-handle:active {
+  cursor: grabbing !important;
+}
 .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
 .form-control-file { position: absolute; font-size: 100px; opacity: 0; right: 0; top: 0; cursor: pointer; height: 100%; width: 100%; }
 .file-custom-label { display: block; width: 100%; padding: 14px 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center; cursor: pointer; transition: all 0.2s; }
@@ -1010,9 +1089,15 @@ const updateTourData = async () => {
 .btn-icon-danger:hover { background-color: #fee2e2; }
 
 /* --- Alerts & Modals --- */
+.modern-alert-banner { display: flex; align-items: center; background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
+.alert-text { flex-grow: 1; font-size: 0.9rem; line-height: 1.4; }
+.close-alert-btn { background: none; border: none; color: #92400e; font-size: 1.2rem; cursor: pointer; padding: 0 8px; opacity: 0.7; }
+.close-alert-btn:hover { opacity: 1; }
+
 .alert { position: fixed; top: 25px; right: 25px; padding: 16px 25px; border-radius: 8px; font-weight: 500; z-index: 1000; display: flex; align-items: center; gap: 10px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 .alert-success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; }
 .alert-danger { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-left: 5px solid #ef4444; }
+.alert-icon { font-size: 1.5rem; margin-right: 12px; }
 
 .custom-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .custom-modal-box { background: white; width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }

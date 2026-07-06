@@ -1,6 +1,6 @@
 <template>
   <div class="tour-overview-container">
-    
+
     <header class="page-header">
       <div class="header-content">
         <h1 class="page-title"><span class="icon">🌍</span> รายการโปรแกรมทัวร์ทั้งหมด</h1>
@@ -14,28 +14,40 @@
     <div class="filter-bar shadow-sm">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          placeholder="ค้นหาด้วยรหัสทัวร์ หรือ ชื่อโปรแกรม..." 
-          class="form-control" 
-        />
+        <input type="text" v-model="searchQuery" placeholder="ค้นหาด้วยรหัสทัวร์ หรือ ชื่อโปรแกรม..."
+          class="form-control" />
       </div>
 
       <div class="filter-actions">
-       <select v-model="filterStatus" class="form-control form-select filter-select">
-  <option value="all">สถานะทั้งหมด</option>
-  <option value="publish">✅ เฉพาะที่เผยแพร่</option>
-  <option value="draft">📝 เฉพาะฉบับร่าง</option>
-  <option value="expired">🚫 ทัวร์ที่หมดอายุ</option>
-</select>
+        <select v-model="filterStatus" class="form-control form-select filter-select">
+          <option value="all">สถานะทั้งหมด</option>
+          <option value="publish">✅ เฉพาะที่เผยแพร่</option>
+          <option value="draft">📝 เฉพาะฉบับร่าง</option>
+          <option value="past_date">🚫 หมดอายุแล้ว</option>
+        </select>
 
         <div class="view-toggle">
-          <button type="button" class="btn-view" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="มุมมองแบบการ์ด">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <button type="button" class="btn-view" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'"
+            title="มุมมองแบบการ์ด">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
           </button>
-          <button type="button" class="btn-view" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'" title="มุมมองแบบตาราง">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <button type="button" class="btn-view" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'"
+            title="มุมมองแบบตาราง">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
           </button>
         </div>
       </div>
@@ -55,54 +67,62 @@
 
     <div v-else :class="['tour-display-area', viewMode === 'grid' ? 'grid-mode' : 'list-mode']">
       
-      <div v-for="(tour, index) in filteredTours" :key="tour?.id || index" class="tour-card shadow-sm">
+      <div v-for="(tour, index) in paginatedTours" :key="tour?.id || index" class="tour-card shadow-sm">
         
         <div class="card-image">
-          <img class="tour-card-image" :src="tour.featured_image_url || 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" alt="Tour Image" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
+          <img class="tour-card-image" :src="tour?.featured_image_url || 'https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" alt="Tour Image" @error="$event.target.src='https://dev1.blupaperdev.com/wp-content/uploads/2026/03/tour-panda-defalt.webp'" />
           <div class="badge-price">
-            <small>เริ่มต้น</small> <br> {{ tour.trip_price_display ? Number(tour.trip_price_display.replace(/,/g, '')).toLocaleString('th-TH') : 'N/A' }} ฿
+            <small>เริ่มต้น</small> <br> {{ tour?.trip_price_display ? Number(tour.trip_price_display.replace(/,/g, '')).toLocaleString('th-TH') : 'N/A' }} ฿
           </div>
-          <!-- <div class="badge-status" :class="tour.status">
-            {{ tour.status === 'publish' ? 'ออนไลน์' : 'ฉบับร่าง' }}
-          </div> -->
         </div>
 
         <div class="card-content">
           <div class="card-meta-top">
-            <span class="trip-code">🏷️ {{ tour.trip_code || 'ไม่มีรหัส' }}</span>
-            <span class="trip-duration">⏱️ {{ tour.trip_days_nights || '-' }}</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+  <span class="trip-code">🏷️ {{ tour?.trip_code || 'ไม่มีรหัส' }}</span>
+  
+  
+</div>
+            <span class="trip-duration">⏱️ {{ tour?.trip_days_nights || '-' }}</span>
           </div>
           
-          <h3 class="tour-title" :title="tour.title">{{ tour.title || 'ไม่มีชื่อโปรแกรมทัวร์' }}</h3>
+          
+          <h3 class="tour-title" :title="tour?.title">{{ tour?.title || 'ไม่มีชื่อโปรแกรมทัวร์' }}</h3>
           
           <div class="tour-specs">
-            <div class="spec-item" v-if="tour.tour_airlines">
+            <div class="spec-item" v-if="tour?.tour_airlines">
               <span class="icon">✈️</span> <span class="text">{{ getAirlineName(tour.tour_airlines) }}</span>
+              
             </div>
-            <div class="spec-item" v-if="tour.tour_hotel_rating">
+            <span v-if="isPastTravelDate(tour)" class="badge-expired" title="รอบเดินทางทั้งหมดผ่านไปแล้ว">
+    <span class="pulse-dot"></span> หมดเวลา
+  </span>
+            <div class="spec-item" v-if="tour?.tour_hotel_rating">
               <span class="icon">⭐️</span> <span class="text">พัก {{ tour.tour_hotel_rating }} ดาว</span>
             </div>
-            <div class="spec-item full-spec" v-if="tour.destination_ids && tour.destination_ids.length > 0">
+            <div class="spec-item full-spec" v-if="tour?.destination_ids && tour.destination_ids.length > 0">
               <span class="icon">📍</span> <span class="text category-text">{{ getDestinationNames(tour.destination_ids) }}</span>
+
+              
             </div>
           </div>
         </div>
 
         <div class="card-actions">
          <select 
-  :value="tour.status" 
-  @change="promptStatusChange(tour, $event)"
-  class="btn-sm status-dropdown"
-  :class="tour.status === 'publish' ? 'status-publish' : 'status-draft'"
-  :disabled="tour.isUpdating"
->
-  <option value="publish">✅ ออนไลน์</option>
-  <option value="draft">📝 ซ่อนไว้ (ฉบับร่าง)</option>
-</select>
+            :value="tour?.status" 
+            @change="promptStatusChange(tour, $event)"
+            class="btn-sm status-dropdown"
+            :class="tour?.status === 'publish' ? 'status-publish' : 'status-draft'"
+            :disabled="tour?.isUpdating"
+          >
+            <option value="publish">✅ ออนไลน์</option>
+            <option value="draft">📝 ซ่อนไว้ (ฉบับร่าง)</option>
+          </select>
 
           <div class="action-right">
-            <router-link :to="'/tour/' + tour.id" class="btn btn-icon btn-edit"> ✏️ </router-link>
-            <button @click="openDeleteModal(tour.id)" class="btn btn-icon btn-delete" title="ลบทิ้ง" :disabled="tour.isUpdating">
+            <router-link :to="'/tour/' + tour?.id" class="btn btn-icon btn-edit"> ✏️ </router-link>
+            <button @click="openDeleteModal(tour?.id)" class="btn btn-icon btn-delete" title="ลบทิ้ง" :disabled="tour?.isUpdating">
               🗑️
             </button>
           </div>
@@ -110,26 +130,54 @@
 
       </div>
     </div>
+    <div v-if="totalPages > 1" class="pagination-container">
+      <button 
+        class="btn-page" 
+        :disabled="currentPage === 1" 
+        @click="goToPage(currentPage - 1)"
+      >
+        &laquo; ก่อนหน้า
+      </button>
+
+      <button 
+        v-for="page in totalPages" 
+        :key="page" 
+        class="btn-page" 
+        :class="{ active: currentPage === page }" 
+        @click="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button 
+        class="btn-page" 
+        :disabled="currentPage === totalPages" 
+        @click="goToPage(currentPage + 1)"
+      >
+        ถัดไป &raquo;
+      </button>
+    </div>
 
     <transition name="fade">
       <div v-if="showDeleteModal" class="custom-modal-overlay" @click.self="closeDeleteModal">
         <div class="custom-modal-box delete-modal-box shadow-lg text-center">
-          
+
           <div class="warning-icon-large">
-            <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
               <line x1="10" y1="11" x2="10" y2="17"></line>
               <line x1="14" y1="11" x2="14" y2="17"></line>
             </svg>
           </div>
-          
+
           <h3 class="modal-title mt-3">ยืนยันการลบข้อมูล?</h3>
           <p class="modal-desc mt-2">
             คุณแน่ใจหรือไม่ว่าต้องการลบโปรแกรมทัวร์นี้? <br>
             <strong style="color: #dc2626;">ข้อมูลจะถูกลบอย่างถาวรและไม่สามารถกู้คืนได้</strong>
           </p>
-          
+
           <div class="modal-actions-center mt-4">
             <button type="button" class="btn btn-outline-secondary" @click="closeDeleteModal" :disabled="isDeleting">
               ยกเลิก
@@ -139,31 +187,35 @@
               <span v-else>🗑️ ยืนยันการลบ</span>
             </button>
           </div>
-          
+
         </div>
       </div>
     </transition>
 
 
-   <transition name="fade">
+
+
+    <transition name="fade">
       <div v-if="showStatusModal" class="custom-modal-overlay" @click.self="cancelStatusChange">
         <div class="custom-modal-box status-modal-box shadow-lg text-center">
-          
-          <div class="warning-icon-large" style="background: #eff6ff; color: #3b82f6; box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);">
+
+          <div class="warning-icon-large"
+            style="background: #eff6ff; color: #3b82f6; box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1);">
             <span style="font-size: 2rem;">❓</span>
           </div>
-          
+
           <h3 class="modal-title mt-3">ยืนยันการเปลี่ยนสถานะ?</h3>
           <p class="modal-desc mt-2">
             คุณต้องการเปลี่ยนสถานะโปรแกรมทัวร์นี้เป็น <br>
             <strong :style="{ color: pendingNewStatus === 'publish' ? '#16a34a' : '#d97706', fontSize: '1.1rem' }">
               {{ pendingNewStatus === 'publish' ? '✅ ออนไลน์ (แสดงบนเว็บ)' : '📝 ฉบับร่าง (ซ่อนจากเว็บ)' }}
-            </strong> 
+            </strong>
             ใช่หรือไม่?
           </p>
-          
+
           <div class="modal-actions-center mt-4">
-            <button type="button" class="btn btn-outline-secondary" @click="cancelStatusChange" :disabled="isStatusUpdating">
+            <button type="button" class="btn btn-outline-secondary" @click="cancelStatusChange"
+              :disabled="isStatusUpdating">
               ยกเลิก
             </button>
             <button type="button" class="btn btn-primary" @click="confirmStatusChange" :disabled="isStatusUpdating">
@@ -171,7 +223,7 @@
               <span v-else>ยืนยันการเปลี่ยนแปลง</span>
             </button>
           </div>
-          
+
         </div>
       </div>
     </transition>
@@ -186,7 +238,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
 
 const tours = ref([])
@@ -225,14 +277,43 @@ const showToast = (msg, type = 'success') => {
 }
 
 
+// 🟢 1. ตัวแปรสำหรับการแบ่งหน้า (Pagination)
+const currentPage = ref(1);
+const itemsPerPage = 12; // กำหนดให้แสดง 12 การ์ดต่อหน้า
+
+// 🟢 2. Watcher: จับตาดูว่าถ้ามีการพิมพ์ค้นหา หรือเปลี่ยน Filter ให้กลับไปหน้า 1 เสมอ
+watch([searchQuery, filterStatus], () => {
+  currentPage.value = 1;
+});
+
+// 🟢 3. คำนวณจำนวนหน้าทั้งหมด
+const totalPages = computed(() => {
+  return Math.ceil(filteredTours.value.length / itemsPerPage);
+});
+
+// 🟢 4. ตัดอาร์เรย์มาแสดงเฉพาะทัวร์ในหน้าที่เลือก (หน้านั้นๆ)
+const paginatedTours = computed(() => {
+  const startIndex = (currentPage.value - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return filteredTours.value.slice(startIndex, endIndex);
+});
+
+// 🟢 5. ฟังก์ชันสำหรับกดเปลี่ยนหน้า (มีเลื่อนกลับไปบนสุดให้อัตโนมัติ)
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนจอขึ้นบนสุด
+  }
+};
+
 // 🟢 ฟังก์ชันเมื่อผู้ใช้กดเลือก Dropdown (จะยังไม่เปลี่ยนค่าจริง แต่โชว์ Modal ก่อน)
 const promptStatusChange = (tour, event) => {
   pendingStatusTour.value = tour
   pendingNewStatus.value = event.target.value
   showStatusModal.value = true
-  
+
   // บังคับให้ Dropdown กลับไปแสดงค่าเดิมก่อน (จนกว่าจะกดยืนยัน)
-  event.target.value = tour.status 
+  event.target.value = tour.status
 }
 
 // 🟢 ฟังก์ชันเมื่อกดยกเลิก
@@ -249,19 +330,14 @@ const today = new Date().toISOString().split('T')[0];
 // 🟢 ฟังก์ชันเช็คว่าทัวร์นี้ "หมดอายุทั้งหมดแล้ว" หรือไม่
 // 🟢 ฟังก์ชันตรวจสอบว่าทัวร์หมดอายุทุกรอบหรือยัง
 const isTourExpired = (tour) => {
-  // 1. ดักจับ Error: ถ้า tour เป็น undefined หรือ null ให้ข้ามไปเลย (return false)
-  if (!tour) {
+  // ดักกรณีข้อมูลไม่สมบูรณ์
+  if (!tour?.trip_pricing_data || !Array.isArray(tour.trip_pricing_data) || tour.trip_pricing_data.length === 0) {
     return false;
   }
 
-  // 2. ดักจับ Error: ถ้าไม่มี property trip_pricing_data หรือไม่ใช่ Array หรือ Array ว่าง
-  if (!tour.trip_pricing_data || !Array.isArray(tour.trip_pricing_data) || tour.trip_pricing_data.length === 0) {
-    return false;
-  }
+  const today = new Date().toISOString().split('T')[0]; // วันที่ปัจจุบัน (YYYY-MM-DD)
 
-  const today = new Date().toISOString().split('T')[0]; // ได้ค่าเป็น YYYY-MM-DD
-  
-  // 3. ตรวจสอบเงื่อนไขวันหมดอายุ
+  // ทัวร์จะถือว่าหมดอายุ "ถ้าทุกรอบเดินทาง" มี end_date ที่น้อยกว่าวันนี้
   return tour.trip_pricing_data.every(round => {
     return round.end_date && round.end_date < today;
   });
@@ -272,19 +348,48 @@ const expiredTours = computed(() => {
 });
 
 
+// 🟢 ฟังก์ชันสำหรับสั่งปิดทัวร์ที่เลยวันเดินทางแล้วโดยอัตโนมัติ
+const handleAutoDraft = async (tourList) => {
+  // กรองเฉพาะทัวร์ที่ "เลยวันเดินทางแล้ว" และ "สถานะยังเป็นออนไลน์อยู่"
+  const expiredTours = tourList.filter(tour => isPastTravelDate(tour) && tour.status === 'publish');
+
+  if (expiredTours.length === 0) return;
+
+  console.log(`พบทัวร์เลยวันเดินทางจำนวน ${expiredTours.length} รายการ กำลังปรับเป็นแบบร่าง...`);
+
+  // วนลูปยิง API เพื่ออัปเดตสถานะทีละรายการ
+  for (const tour of expiredTours) {
+    try {
+      tour.isUpdating = true; // แสดง Loading ที่การ์ด (ถ้ามี)
+      
+      await secureApi.post(`/update-tour-status/${tour.id}`, { 
+        status: 'draft' 
+      });
+
+      // อัปเดตสถานะในหน้าจอทันทีหลังจาก API ตอบกลับสำเร็จ
+      tour.status = 'draft';
+      console.log(`✅ ทัวร์ ID: ${tour.id} ถูกปรับเป็นแบบร่างเรียบร้อยแล้ว`);
+    } catch (err) {
+      console.error(`❌ ไม่สามารถปรับสถานะทัวร์ ID: ${tour.id} ได้:`, err);
+    } finally {
+      tour.isUpdating = false;
+    }
+  }
+};
+
 // 🟢 ฟังก์ชันเมื่อกดยืนยันการเปลี่ยนสถานะ
 const confirmStatusChange = async () => {
   if (!pendingStatusTour.value) return
-  
+
   const tour = pendingStatusTour.value
   const newStatus = pendingNewStatus.value
-  
+
   isStatusUpdating.value = true
   tour.isUpdating = true
 
   try {
     const res = await secureApi.post(`/update-tour-status/${tour.id}`, { status: newStatus })
-    if(res.data && res.data.success) {
+    if (res.data && res.data.success) {
       // ✅ เมื่อ API สำเร็จ ค่อยอัปเดตค่า status บนหน้าจอให้เปลี่ยนตาม
       tour.status = newStatus
       showToast(newStatus === 'publish' ? '✅ เปิดออนไลน์สำเร็จ!' : '📝 ซ่อนเป็นฉบับร่างสำเร็จ!', 'success')
@@ -296,7 +401,7 @@ const confirmStatusChange = async () => {
     console.error('Error updating status:', error)
     showToast('❌ เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนสถานะได้', 'error')
     cancelStatusChange()
-    await fetchTours() 
+    await fetchTours()
   } finally {
     tour.isUpdating = false
     isStatusUpdating.value = false
@@ -316,7 +421,7 @@ const closeDeleteModal = () => {
 
 const executeDelete = async () => {
   if (!tourIdToDelete.value) return
-  
+
   isDeleting.value = true
   const targetTour = tours.value.find(t => t.id === tourIdToDelete.value)
   if (targetTour) targetTour.isUpdating = true
@@ -324,7 +429,7 @@ const executeDelete = async () => {
   try {
     const res = await secureApi.delete(`/tours/${tourIdToDelete.value}`)
     if (res.data && res.data.success) {
-      tours.value = tours.value.filter(t => t.id !== tourIdToDelete.value) 
+      tours.value = tours.value.filter(t => t.id !== tourIdToDelete.value)
       closeDeleteModal()
       showToast('🗑️ ลบโปรแกรมทัวร์สำเร็จ!', 'success') // <--- เพิ่มตรงนี้
     } else {
@@ -340,7 +445,7 @@ const executeDelete = async () => {
 }
 
 const secureApi = axios.create({
-  baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
+  baseURL: 'https://panda.co.th/wp-json/blupaper/v1',
   timeout: 60000
 })
 
@@ -349,7 +454,7 @@ secureApi.interceptors.response.use((response) => {
     // หาตำแหน่งของปีกกา { หรือ [ ตัวแรกที่เป็นจุดเริ่มต้นของ JSON จริงๆ
     const firstObj = response.data.indexOf('{');
     const firstArr = response.data.indexOf('[');
-    
+
     let firstValidIndex = -1;
     if (firstObj !== -1 && firstArr !== -1) firstValidIndex = Math.min(firstObj, firstArr);
     else firstValidIndex = Math.max(firstObj, firstArr);
@@ -399,49 +504,79 @@ const getDestinationNames = (idsArray) => {
 }
 
 const fetchTours = async () => {
-  isLoading.value = true
+  isLoading.value = true;
+  errorMessage.value = '';
   try {
-    const response = await secureApi.get('/tours')
-    
+    const response = await secureApi.get('/tours');
     if (response.data && response.data.success) {
-      // 🚨 จุดสำคัญ: ต้องรับค่าจาก response.data.items (ห้ามใช้ .data ซ้อนกัน)
-      tours.value = response.data.items || [] 
-      .filter(t => t !== null && t !== undefined) // 🟢 เพิ่มบรรทัดนี้ เพื่อกรองข้อมูลที่พังทิ้งไป
-        .map(t => ({ ...t, isUpdating: false }))
-      
-      // ลองใส่ Console.log เพื่อเช็คให้ชัวร์ว่าข้อมูลเข้า Vue แล้ว
-      console.log('✅ ข้อมูลทัวร์ที่โหลดได้:', tours.value)
-    } else {
-      tours.value = []
-    }
-  } catch (error) {
-    console.error(error)
-    errorMessage.value = 'ไม่สามารถดึงข้อมูลทัวร์ได้'
-  } finally {
-    isLoading.value = false
-  }
-}
+      // 1. เก็บข้อมูลลงในตัวแปรหลัก
+      tours.value = (response.data.items || [])
+        .filter(t => t !== null)
+        .map(t => ({ ...t, isUpdating: false }));
 
+      // 🟢 2. เรียกใช้ระบบ Auto-Draft ทันทีหลังจากโหลดข้อมูลเสร็จ
+      await handleAutoDraft(tours.value);
+
+    } else {
+      tours.value = [];
+    }
+  } catch (err) {
+    console.error('Error fetching tours:', err);
+    errorMessage.value = 'ไม่สามารถโหลดข้อมูลทัวร์ได้';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 🟢 ฟังก์ชันนี้จะเข้าไปล้วงดู "วันที่เดินทาง" ในข้อมูลทัวร์แบบอัตโนมัติ
+const isPastTravelDate = (tour) => {
+  // ถ้าทัวร์นี้ไม่มีตารางราคาก็ข้ามไป
+  if (!tour?.trip_pricing_data || !Array.isArray(tour.trip_pricing_data) || tour.trip_pricing_data.length === 0) {
+    return false;
+  }
+
+  const today = new Date().toISOString().split('T')[0]; // ดึงวันที่วันนี้ (เช่น 2026-04-28)
+
+  // 🟢 หัวใจหลักอยู่ตรงนี้: มันจะเช็คว่า "วันที่กลับ (end_date)" ของทุกรอบ ผ่านพ้นวันนี้ไปแล้วหรือยัง?
+  return tour.trip_pricing_data.every(round => {
+    return round.end_date && round.end_date < today;
+  });
+};
+
+// 🟢 อัปเดตฟังก์ชันกรองข้อมูลแบบเต็มรูปแบบ
 const filteredTours = computed(() => {
   let result = tours.value
-  
-  // เช็คเงื่อนไข Filter Dropdown
+
+  // ---------------------------------------------------
+  // 1. การกรองจาก Dropdown สถานะ
+  // ---------------------------------------------------
   if (filterStatus.value === 'publish' || filterStatus.value === 'draft') {
+    // กรองเฉพาะ เผยแพร่ หรือ ฉบับร่าง
     result = result.filter(t => t.status === filterStatus.value)
-  } else if (filterStatus.value === 'expired') {
-    result = result.filter(t => isTourExpired(t)) // ดึงเฉพาะที่หมดอายุแล้ว
+  }
+  else if (filterStatus.value === 'past_date') {
+    // กรองเฉพาะ ทัวร์ที่ "เลยวันเดินทางไปแล้วทั้งหมด" โดยเรียกใช้ฟังก์ชัน isPastTravelDate
+    result = result.filter(t => isPastTravelDate(t))
   }
 
-  // เช็คเงื่อนไขช่องค้นหา
+  // ---------------------------------------------------
+  // 2. การกรองจากช่องพิมพ์ค้นหา (Search Box)
+  // ---------------------------------------------------
   if (searchQuery.value.trim() !== '') {
     const q = searchQuery.value.toLowerCase().trim()
     result = result.filter(t => {
+      // ค้นหาจาก ชื่อทัวร์
       const titleMatch = (t.title || '').toLowerCase().includes(q)
+      // ค้นหาจาก รหัสทัวร์
       const codeMatch = (t.trip_code || '').toLowerCase().includes(q)
+      // ค้นหาจาก ชื่อประเทศ/จุดหมายปลายทาง
       const destMatch = getDestinationNames(t.destination_ids).toLowerCase().includes(q)
+
+      // ถ้าตรงกับเงื่อนไขใดเงื่อนไขหนึ่ง ให้นำมาแสดง
       return titleMatch || codeMatch || destMatch
     })
   }
+
   return result
 })
 
@@ -451,7 +586,7 @@ const updateTourStatus = async (id, newStatus) => {
 
   try {
     const res = await secureApi.post(`/update-tour-status/${id}`, { status: newStatus })
-    if(res.data && res.data.success) {
+    if (res.data && res.data.success) {
       // ✅ ถ้าสำเร็จ ให้โชว์ Toast สีเขียว
       showToast(newStatus === 'publish' ? '✅ เปิดออนไลน์สำเร็จ!' : '📝 ซ่อนเป็นฉบับร่างสำเร็จ!', 'success')
     } else {
@@ -489,7 +624,9 @@ onMounted(async () => {
   max-width: 1300px;
   margin: 0 auto;
 }
-.modal-title,.modal-desc  {
+
+.modal-title,
+.modal-desc {
   text-align: center;
 }
 
@@ -505,8 +642,113 @@ onMounted(async () => {
   border-bottom: 2px solid var(--color-primary);
   padding-bottom: 15px;
 }
-.page-title { font-size: 1.8rem; font-weight: 600; color: var(--color-secondary); margin: 0; }
-.page-subtitle { color: #64748b; margin: 5px 0 0 0; font-weight: 300;}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.page-subtitle {
+  color: #64748b;
+  margin: 5px 0 0 0;
+  font-weight: 300;
+}
+
+
+/* ---------------------------------------------------
+   🟢 STYLES สำหรับป้าย "เลยวันเดินทาง"
+--------------------------------------------------- */
+.badge-expired {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  padding: 4px 12px;
+  border-radius: 20px; /* ปรับเป็นทรงแคปซูล */
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08); /* เพิ่มเงาบางๆ ให้มีมิติ */
+  letter-spacing: 0.3px;
+}
+
+/* จุดวงกลมสีแดง */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulse-red 1.5s infinite; /* เรียกใช้ Effect กระพริบ */
+}
+
+/* Effect กระพริบแบบนุ่มนวล */
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* (ลูกเล่นเสริม) ทำให้รูปปกของการ์ดที่เลยวันเดินทางไปแล้ว สีซีดลงเล็กน้อย */
+.tour-card:has(.badge-expired) .card-image {
+  filter: grayscale(0.5) opacity(0.9);
+  transition: all 0.3s ease;
+}
+
+/* ---------------------------------------------------
+   🟢 PAGINATION STYLES
+--------------------------------------------------- */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  padding-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-page {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-page.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+@media (max-width: 576px) {
+  .btn-page {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}
 
 
 /* -----------------------------------
@@ -560,9 +802,9 @@ onMounted(async () => {
   max-width: 400px;
   padding: 30px;
   background: white;
-  
+
   /* 🟢 ส่วนที่เพิ่มเข้ามาเพื่อจัดกึ่งกลาง */
-  text-align: center; 
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -592,6 +834,7 @@ onMounted(async () => {
   flex: 1;
   max-width: 400px;
 }
+
 .search-icon {
   position: absolute;
   left: 14px;
@@ -599,6 +842,7 @@ onMounted(async () => {
   transform: translateY(-50%);
   color: #94a3b8;
 }
+
 .search-box .form-control {
   width: 100%;
   padding: 10px 15px 10px 40px;
@@ -608,11 +852,12 @@ onMounted(async () => {
   font-family: 'Kanit', sans-serif;
   transition: all 0.2s;
 }
+
 .search-box .form-control:focus {
   background: white;
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(204,0,0,0.1);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
 }
 
 .filter-actions {
@@ -639,6 +884,7 @@ onMounted(async () => {
   padding: 4px;
   border: 1px solid #e2e8f0;
 }
+
 .btn-view {
   background: transparent;
   border: none;
@@ -651,10 +897,11 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
 }
+
 .btn-view.active {
   background: white;
   color: var(--color-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* ---------------------------------------------------
@@ -673,14 +920,24 @@ onMounted(async () => {
   align-items: center;
   gap: 15px;
 }
-.error-text { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
+
+.error-text {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
 
 .tour-card-image {
-  width: 100%;             /* บังคับความกว้างให้เต็มกรอบของการ์ด */
-  aspect-ratio: 1 / 1;     /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
-  object-fit: cover;       /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
-  object-position: center; /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */
+  width: 100%;
+  /* บังคับความกว้างให้เต็มกรอบของการ์ด */
+  aspect-ratio: 1 / 1;
+  /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
+  object-fit: cover;
+  /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
+  object-position: center;
+  /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */
 }
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -689,7 +946,12 @@ onMounted(async () => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
-@keyframes spin { 100% { transform: rotate(360deg); } }
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 /* ---------------------------------------------------
    TOUR DISPLAY AREA (Grid & List Support)
@@ -697,11 +959,12 @@ onMounted(async () => {
 .tour-display-area {
   display: grid;
   gap: 25px;
-  
+
 }
 
 .tour-display-area.grid-mode {
-  grid-template-columns: repeat(4, 1fr); /* บังคับ 4 การ์ดต่อ 1 แถว */
+  grid-template-columns: repeat(4, 1fr);
+  /* บังคับ 4 การ์ดต่อ 1 แถว */
 }
 
 
@@ -711,60 +974,118 @@ onMounted(async () => {
 /* หน้าจอคอมพิวเตอร์ขนาดเล็ก (ลดเหลือ 3 การ์ด) */
 @media (max-width: 1200px) {
   .tour-display-area.grid-mode {
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 /* หน้าจอแท็บเล็ต (ลดเหลือ 2 การ์ด) */
 @media (max-width: 992px) {
-  .tour-overview-container { padding: 20px; }
-  .tour-display-area.grid-mode {
-    grid-template-columns: repeat(2, 1fr); 
+  .tour-overview-container {
+    padding: 20px;
   }
-  .tour-display-area.list-mode .tour-card { height: auto; align-items: center; }
+
+  .tour-display-area.grid-mode {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tour-display-area.list-mode .tour-card {
+    height: auto;
+    align-items: center;
+  }
 }
 
 /* หน้าจอมือถือ (ลดเหลือ 1 การ์ด) */
 @media (max-width: 768px) {
-  .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-  .search-box { max-width: 100%; }
-  .filter-actions { justify-content: space-between; width: 100%; }
-  
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
+  .filter-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
   /* บังคับเหลือ 1 แถวบนมือถือ */
   .tour-display-area.grid-mode {
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
   }
 
   /* บังคับ List Mode ให้การ์ดพับลงมาในจอเล็ก */
-  .tour-display-area.list-mode .tour-card { flex-direction: column; height: auto; }
-  .tour-display-area.list-mode .card-image { width: 100%; border-right: none; border-bottom: 1px solid #f1f5f9; height: 200px; }
-  .tour-display-area.list-mode .card-actions { width: 100%; flex-direction: row; justify-content: space-between; border-top: 1px solid #f1f5f9; }
+  .tour-display-area.list-mode .tour-card {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .tour-display-area.list-mode .card-image {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    height: 200px;
+  }
+
+  .tour-display-area.list-mode .card-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+  }
 }
 
 @media (max-width: 576px) {
-  .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-  .page-header .btn { width: 100%; justify-content: center; }
-  
-  .filter-actions { flex-direction: column; align-items: stretch; }
-  .view-toggle { justify-content: center; }
-  
-  .modal-actions-center { flex-direction: column-reverse; }
-  .modal-actions-center .btn { width: 100%; padding: 12px; }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-toggle {
+    justify-content: center;
+  }
+
+  .modal-actions-center {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions-center .btn {
+    width: 100%;
+    padding: 12px;
+  }
 }
+
 .tour-display-area.list-mode {
   grid-template-columns: 1fr;
 }
+
 .tour-display-area.list-mode .tour-card {
   flex-direction: row;
   height: 160px;
 }
+
 .tour-display-area.list-mode .card-image {
-  width: 160px; /* ปรับให้พอดีกับความสูง 160px ของการ์ด เพื่อให้เป็นสี่เหลี่ยมจัตุรัส */
+  width: 160px;
+  /* ปรับให้พอดีกับความสูง 160px ของการ์ด เพื่อให้เป็นสี่เหลี่ยมจัตุรัส */
   height: 100%;
 }
 
 .tour-display-area.list-mode .tour-card-image {
-  height: 100%; /* บังคับให้รูปใน List Mode เต็มกรอบ 160x160 พอดี */
+  height: 100%;
+  /* บังคับให้รูปใน List Mode เต็มกรอบ 160x160 พอดี */
 }
 
 .tour-display-area.list-mode .card-content {
@@ -773,6 +1094,7 @@ onMounted(async () => {
   justify-content: center;
   border-right: 1px solid #f1f5f9;
 }
+
 .tour-display-area.list-mode .card-actions {
   flex-direction: column;
   justify-content: center;
@@ -793,100 +1115,255 @@ onMounted(async () => {
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .tour-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
   border-color: #cbd5e1;
 }
 
 /* 1. ลบความสูง height: 210px; ทิ้งไป เพื่อให้กล่องยืดหยุ่นตามสัดส่วนภาพ */
-.card-image { 
-  position: relative; 
-  background: #f1f5f9; 
+.card-image {
+  position: relative;
+  background: #f1f5f9;
   border-right: 1px solid #f1f5f9;
-  overflow: hidden; /* เพิ่มตัวนี้เพื่อป้องกันภาพล้นออกนอกกรอบ */
+  overflow: hidden;
+  /* เพิ่มตัวนี้เพื่อป้องกันภาพล้นออกนอกกรอบ */
 }
 
 /* 2. จัดการรูปภาพให้เป็น 1:1 แบบไม่บังข้อความ */
-.tour-card-image { 
-  width: 100%;            
-  aspect-ratio: 1 / 1;    
-  object-fit: cover;      
-  object-position: center; 
-  display: block; /* เพิ่มตัวนี้เพื่อลบช่องว่างสีขาวใต้รูปภาพ */
+.tour-card-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  /* เพิ่มตัวนี้เพื่อลบช่องว่างสีขาวใต้รูปภาพ */
 }
 
-.card-image img {  width: 100%;             /* บังคับความกว้างให้เต็มกรอบของการ์ด */
-  aspect-ratio: 1 / 1;     /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
-  object-fit: cover;       /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
-  object-position: center; /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */}
+.card-image img {
+  width: 100%;
+  /* บังคับความกว้างให้เต็มกรอบของการ์ด */
+  aspect-ratio: 1 / 1;
+  /* บังคับสัดส่วนให้เป็นสี่เหลี่ยมจัตุรัส 1:1 เสมอ */
+  object-fit: cover;
+  /* ตัดส่วนเกินทิ้งโดยไม่ให้รูปยืดหรือเบี้ยว */
+  object-position: center;
+  /* จัดตำแหน่งให้โชว์ตรงกลางของภาพ */
+}
 
 .badge-price {
-  position: absolute; top: 15px; left: 15px;
-  background: rgba(26, 26, 26, 0.85); color: white;
-  padding: 6px 12px; border-radius: 8px;
-  font-weight: 600; font-size: 1.0rem; text-align: left;
-  line-height: 1.1; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(26, 26, 26, 0.85);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.0rem;
+  text-align: left;
+  line-height: 1.1;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.badge-price small { font-size: 0.75rem; font-weight: 400; opacity: 0.8; }
+
+.badge-price small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
 
 .badge-status {
-  position: absolute; top: 15px; left: 15px;
-  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-  backdrop-filter: blur(4px); text-transform: uppercase; letter-spacing: 0.5px;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.badge-status.publish { background: rgba(22, 163, 74, 0.9); color: white; border: 1px solid #4ade80;}
-.badge-status.draft { background: rgba(245, 158, 11, 0.9); color: white; border: 1px solid #fcd34d;}
 
-.card-content { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-.card-meta-top { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 12px; }
-.trip-code { color: var(--color-primary); font-weight: 600; background: #fff5f5; padding: 2px 8px; border-radius: 4px;}
-.trip-duration { color: #64748b; font-weight: 500; }
+.badge-status.publish {
+  background: rgba(22, 163, 74, 0.9);
+  color: white;
+  border: 1px solid #4ade80;
+}
+
+.badge-status.draft {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+  border: 1px solid #fcd34d;
+}
+
+.card-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-meta-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.trip-code {
+  color: var(--color-primary);
+  font-weight: 600;
+  background: #fff5f5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.trip-duration {
+  color: #64748b;
+  font-weight: 500;
+}
 
 .tour-title {
-  font-size: 1.1rem; font-weight: 600; color: var(--color-secondary);
-  margin: 0 0 15px 0; line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .tour-specs {
-  display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
 }
+
 .spec-item {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: #f8fafc; padding: 4px 10px; border-radius: 6px;
-  font-size: 0.85rem; color: #475569; border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
-.full-spec { width: 100%; }
-.category-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+.full-spec {
+  width: 100%;
+}
+
+.category-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ---------------------------------------------------
    ACTIONS
 --------------------------------------------------- */
 .card-actions {
-  padding: 15px 20px; border-top: 1px solid #f1f5f9; background: #fdfdfd;
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 15px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fdfdfd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
-.action-right { display: flex; gap: 8px; }
+
+.action-right {
+  display: flex;
+  gap: 8px;
+}
 
 .status-dropdown {
-  border: 1px solid #cbd5e1; border-radius: 20px; padding: 6px 12px;
-  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
-  cursor: pointer; outline: none; appearance: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 5 6 8 9 5'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
 }
-.status-publish { background-color: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-.status-draft { background-color: #fffbeb; color: #d97706; border-color: #fde68a; }
 
-.btn { font-family: 'Kanit', sans-serif; border: none; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; }
-.btn-primary { background: var(--color-primary); color: #fff; box-shadow: 0 4px 6px rgba(204,0,0,0.2); }
-.btn-primary:hover { background: #a30000; transform: translateY(-1px); box-shadow: 0 6px 12px rgba(204,0,0,0.3); }
+.status-publish {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
 
-.btn-icon { background: white; border: 1px solid #cbd5e1; width: 36px; height: 36px; padding: 0; border-radius: 8px; }
-.btn-edit:hover { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
-.btn-delete:hover:not(:disabled) { background: #fef2f2; border-color: #dc2626; color: #dc2626;}
-.btn-delete:disabled { opacity: 0.5; cursor: not-allowed;}
+.status-draft {
+  background-color: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+.btn {
+  font-family: 'Kanit', sans-serif;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background: #a30000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(204, 0, 0, 0.3);
+}
+
+.btn-icon {
+  background: white;
+  border: 1px solid #cbd5e1;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.btn-edit:hover {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* -----------------------------------
    🟢 1. CUSTOM MODAL OVERLAY (เพิ่มเพื่อแก้ปัญหา Popup ไม่ขึ้น)
@@ -910,15 +1387,22 @@ onMounted(async () => {
   max-width: 400px;
   padding: 30px;
   background: white;
-  border-top: 5px solid #dc2626; 
+  border-top: 5px solid #dc2626;
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: modalPop 0.3s ease-out forwards;
 }
 
 @keyframes modalPop {
-  0% { transform: scale(0.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .warning-icon-large {
@@ -936,9 +1420,19 @@ onMounted(async () => {
 }
 
 @keyframes shakeWarning {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px) rotate(-5deg); }
-  75% { transform: translateX(5px) rotate(5deg); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px) rotate(-5deg);
+  }
+
+  75% {
+    transform: translateX(5px) rotate(5deg);
+  }
 }
 
 .modal-title {
@@ -976,34 +1470,89 @@ onMounted(async () => {
    🟢 3. RESPONSIVE SUPPORT (รองรับมือถือ & แท็บเล็ต)
 --------------------------------------------------- */
 @media (max-width: 992px) {
+
   /* แท็บเล็ต: ปรับช่องว่าง */
-  .tour-overview-container { padding: 20px; }
-  .tour-display-area.list-mode .tour-card { height: auto; align-items: center; }
+  .tour-overview-container {
+    padding: 20px;
+  }
+
+  .tour-display-area.list-mode .tour-card {
+    height: auto;
+    align-items: center;
+  }
 }
 
 @media (max-width: 768px) {
+
   /* มือถือแนวนอน & แท็บเล็ตแนวตั้ง: ซ้อน Filter Bar เป็นแนวตั้ง */
-  .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-  .search-box { max-width: 100%; }
-  .filter-actions { justify-content: space-between; width: 100%; }
-  
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
+  .filter-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
   /* บังคับ List Mode ให้การ์ดพับลงมาในจอเล็ก */
-  .tour-display-area.list-mode .tour-card { flex-direction: column; height: auto; }
-  .tour-display-area.list-mode .card-image { width: 100%; border-right: none; border-bottom: 1px solid #f1f5f9; height: 200px; }
-  .tour-display-area.list-mode .card-actions { width: 100%; flex-direction: row; justify-content: space-between; border-top: 1px solid #f1f5f9; }
+  .tour-display-area.list-mode .tour-card {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .tour-display-area.list-mode .card-image {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    height: 200px;
+  }
+
+  .tour-display-area.list-mode .card-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+  }
 }
 
 @media (max-width: 576px) {
+
   /* มือถือแนวตั้ง: เรียง Header ใหม่ */
-  .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-  .page-header .btn { width: 100%; justify-content: center; }
-  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   /* ตัวกรองซ้อนกันลงมา */
-  .filter-actions { flex-direction: column; align-items: stretch; }
-  .view-toggle { justify-content: center; }
-  
+  .filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-toggle {
+    justify-content: center;
+  }
+
   /* จัดการปุ่ม Modal ให้กดย้ายง่ายขึ้น */
-  .modal-actions-center { flex-direction: column-reverse; }
-  .modal-actions-center .btn { width: 100%; padding: 12px; }
+  .modal-actions-center {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions-center .btn {
+    width: 100%;
+    padding: 12px;
+  }
 }
 </style>

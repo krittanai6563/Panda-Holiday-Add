@@ -9,9 +9,9 @@
         <button @click="fetchMonths" class="btn btn-outline-secondary" :disabled="isLoading">
           🔄 โหลดข้อมูลใหม่
         </button>
-        <button @click="toggleForm" class="btn btn-primary" :class="{ 'btn-cancel': showAddForm }">
+        <!-- <button @click="toggleForm" class="btn btn-primary" :class="{ 'btn-cancel': showAddForm }">
           {{ showAddForm ? '❌ ปิดฟอร์ม' : '+ เพิ่มเดือนที่เดินทาง' }}
-        </button>
+        </button> -->
       </div>
     </header>
 

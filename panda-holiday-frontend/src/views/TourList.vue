@@ -100,7 +100,7 @@
                     <div class="file-preview-info">
                       <span class="file-icon" style="font-size: 1.5rem;">📄</span>
                       <span class="file-name" style="margin-top: 5px;">{{ pdfFile.name }}</span>
-                      <small class="file-size" style="color: #16a34a;">(${(pdfFile.size / 1024).toFixed(2)} KB)</small>
+                      <small class="file-size" style="color: #16a34a;">{{ (pdfFile.size / 1024).toFixed(2) }} KB</small>
                     </div>
                   </template>
                   <template v-else>
@@ -227,13 +227,18 @@
         <label class="inner-label">ตารางราคา</label>
         <div v-for="(price, priceIndex) in round.prices" :key="priceIndex" class="price-row-grid">
 
-          <select v-model="price.category" class="form-control form-control-sm form-select"
+          <!-- <select v-model="price.category" class="form-control form-control-sm form-select"
             :disabled="loadingPricingCategories">
             <option value="" disabled>-- เลือกหมวดหมู่ราคา --</option>
             <option v-for="cat in pricingCategoriesList" :key="cat.value" :value="cat.value">
               {{ cat.label }}
             </option>
-          </select>
+          </select> -->
+         <input type="text" 
+  v-model="price.category" 
+  class="form-control form-control-sm readonly-input" 
+  placeholder="ระบุหมวดหมู่ราคา"
+  readonly />
 
           <input type="text" 
   :value="price.amount ? Number(price.amount).toLocaleString('th-TH') : ''"
@@ -247,10 +252,10 @@
           </button>
         </div>
 
-        <button type="button" @click="addPriceCategory(roundIndex)"
+        <!-- <button type="button" @click="addPriceCategory(roundIndex)"
           class="btn btn-outline-success btn-xs mt-3 full-width-btn">
           + เพิ่มหมวดหมู่ราคา
-        </button>
+        </button> -->
       </div>
     </div>
   </div>
@@ -361,7 +366,7 @@
         </div> -->
       </section>
 
-    
+      
 
       <section class="form-section shadow-sm">
         <h2 class="section-title"><span class="number">6</span> ตั้งค่า SEO (Rank Math)</h2>
@@ -405,15 +410,6 @@
   </button>
 </div>
 
-      <!-- <footer class="form-actions">
-        <button type="button" @click="resetForm" class="btn btn-secondary" :disabled="isSubmitting">
-          ล้างข้อมูล
-        </button>
-        <button type="submit" class="btn btn-primary btn-lg submit-btn" :disabled="isSubmitting">
-          <span v-if="isSubmitting">⏳ {{ uploadProgressText || 'กำลังบันทึก...' }}</span>
-          <span v-else>💾 บันทึกโปรแกรมทัวร์</span>
-        </button>
-      </footer> -->
     </form>
 
     <transition name="fade">
@@ -684,7 +680,6 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import Papa from 'papaparse';
 
-
 // ---------------------------------------------------------------------
 // DEFAULT FORM
 // ---------------------------------------------------------------------
@@ -693,8 +688,8 @@ const createDefaultFormData = () => ({
   trip_code: '',
   trip_price_display: '',
   trip_days_nights: '',
-  trip_days: '',   // เพิ่มตัวเก็บจำนวนวัน
-  trip_nights: '', // เพิ่มตัวเก็บจำนวนคืน
+  trip_days: '',
+  trip_nights: '',
   trip_schedule: '',
   tour_airlines: '',
   tour_hotel_rating: '5',
@@ -718,7 +713,6 @@ const createDefaultFormData = () => ({
   featured_image_id: 0,
   gallery_image_ids: [],
 
-
   trip_pricing_data: [
     {
       _id: Date.now(),
@@ -726,8 +720,8 @@ const createDefaultFormData = () => ({
       end_date: '',
       max_pax: '',
       prices: [
-        { category: 'ผู้ใหญ่ (พักเดี่ยว)', amount: '' },
-        { category: 'ผู้ใหญ่ (พักคู่)', amount: '' }
+        { category: 'พักคู่', amount: '' },
+        { category: 'พักเดี่ยว', amount: '' }
       ]
     }
   ]
@@ -738,11 +732,40 @@ const today = new Date().toISOString().split('T')[0]
 const showDateAlert = ref(false);
 
 // ---------------------------------------------------------------------
+// 🟢 AUTO-SAVE (LOCAL STORAGE) STATE
+// ---------------------------------------------------------------------
+const DRAFT_STORAGE_KEY = 'panda_tour_draft_data';
+let autoSaveTimeout = null;
+
+// ฟังก์ชันสำหรับบันทึกข้อมูลลงเครื่องผู้ใช้ (Auto-Save)
+const saveDraftToLocalStorage = () => {
+  try {
+    const draftData = {
+      formData: formData.value,
+      itineraryRows: itineraryRows.value
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+  } catch (err) {
+    console.warn('Auto-save failed:', err);
+  }
+};
+
+// ---------------------------------------------------------------------
 // ITINERARY BUILDER STATE
 // ---------------------------------------------------------------------
 const itineraryRows = ref([])
 const featuredImagePreview = ref(null)
 const galleryPreviews = ref([])
+
+// 🟢 จับตาดูการเปลี่ยนแปลงข้อมูลในฟอร์มและตาราง ถ้ามีการพิมพ์ จะนับเวลา 3 วิแล้วเซฟออโต้
+watch([formData, itineraryRows], () => {
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  
+  // หน่วงเวลา 3 วินาทีหลังจากผู้ใช้หยุดพิมพ์ เพื่อป้องกันไม่ให้ทำงานหนักเกินไป
+  autoSaveTimeout = setTimeout(() => {
+    saveDraftToLocalStorage();
+  }, 3000); 
+}, { deep: true });
 
 const addItineraryRow = () => {
   itineraryRows.value.push({
@@ -763,7 +786,6 @@ const getNextDay = (dateString) => {
   return date.toISOString().split('T')[0]
 }
 
-
 const showDuplicateModal = ref(false)
 const duplicateCount = ref(1)
 const currentDuplicateIndex = ref(null)
@@ -778,7 +800,6 @@ const closeDuplicateModal = () => {
   showDuplicateModal.value = false; 
   currentDuplicateIndex.value = null; 
 }
-
 
 const confirmDuplicate = () => {
   const index = currentDuplicateIndex.value;
@@ -799,96 +820,26 @@ const confirmDuplicate = () => {
     });
   }
   
-  // แทรกข้อมูลที่ก็อปปี้ต่อท้ายรอบที่เลือกไว้
   formData.value.trip_pricing_data.splice(index + 1, 0, ...newRounds);
   formData.value.trip_pricing_data = [...formData.value.trip_pricing_data];
   
-  closeDuplicateModal(); // ปิดหน้าต่าง
+  closeDuplicateModal();
 }
-
-
-
-// 🟢 1. ฟังก์ชันคำนวณวันที่กลับอัตโนมัติ
-const autoCalculateEndDate = (roundIndex) => {
-  const round = formData.value.trip_pricing_data[roundIndex];
-  const days = parseInt(formData.value.trip_days);
-
-  if (!round.start_date) {
-    round.end_date = '';
-    return;
-  }
-
-  // ตรวจสอบว่าได้กรอกจำนวนวันในส่วนที่ 1 หรือยัง
-  if (!days || days <= 0) {
-    // 🟢 เปิดการแสดงผลแจ้งเตือน
-    showDateAlert.value = true;
-    round.start_date = '';
-    
-    // ตั้งเวลาให้แจ้งเตือนหายไปเองใน 5 วินาที
-    setTimeout(() => {
-      showDateAlert.value = false;
-    }, 5000);
-    
-    return;
-  }
-  showDateAlert.value = false;
-
-  // 🟢 หั่น String YYYY-MM-DD ออกมาสร้าง Date ตรงๆ เพื่อป้องกัน Timezone Bug
-  const [yearStr, monthStr, dayStr] = round.start_date.split('-');
-  const start = new Date(yearStr, monthStr - 1, dayStr); 
-  
-  // บวกจำนวนวัน (ลบ 1 เพราะนับวันเริ่มต้นเป็นวันที่ 1 ด้วย)
-  start.setDate(start.getDate() + (days - 1));
-  
-  // จัดรูปแบบกลับเป็น YYYY-MM-DD ให้ Input
-  const year = start.getFullYear();
-  const month = String(start.getMonth() + 1).padStart(2, '0');
-  const day = String(start.getDate()).padStart(2, '0');
-  
-  round.end_date = `${year}-${month}-${day}`;
-};
-
-// 🟢 2. Watcher คอยดูการเปลี่ยนแปลงของ "จำนวนวัน (trip_days)"
-watch(() => formData.value.trip_days, (newDays) => {
-  const targetDays = Number(newDays) || 0;
-  
-  // 2.1 จัดการเพิ่ม/ลด แถวตารางแผนการเดินทาง (Itinerary)
-  const currentRows = itineraryRows.value.length;
-  if (targetDays > currentRows) {
-    for (let i = currentRows; i < targetDays; i++) {
-      itineraryRows.value.push({ day: i + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' });
-    }
-  } else if (targetDays >= 0 && targetDays < currentRows) {
-    itineraryRows.value.splice(targetDays);
-  }
-
-  // 2.2 อัปเดตวันที่กลับให้ทุกรอบเดินทางที่มีการเลือก "วันที่ไป" ไว้แล้ว
-  if (formData.value.trip_pricing_data?.length > 0) {
-    formData.value.trip_pricing_data.forEach((round, index) => {
-      if (round.start_date) {
-        autoCalculateEndDate(index);
-      }
-    });
-  }
-});
 
 // 🟢 ฟังก์ชันเลือก "เดือนที่เดินทาง" อัตโนมัติตามวันที่ในตารางราคา
 const autoSelectMonths = () => {
-  // 1. ตรวจสอบก่อนว่าดึงข้อมูล Master Data ของเดือนมาหรือยัง
   if (!monthsList.value.length) return;
 
-  // 2. ดึงลำดับเดือน (0-11) ที่ไม่ซ้ำกันจากทุกรอบเดินทาง
   const selectedMonthIndices = new Set();
   formData.value.trip_pricing_data.forEach(round => {
     if (round.start_date) {
       const date = new Date(round.start_date);
       if (!isNaN(date.getTime())) {
-        selectedMonthIndices.add(date.getMonth()); // จะได้เลข 0-11
+        selectedMonthIndices.add(date.getMonth());
       }
     }
   });
 
-  // รายชื่อเดือนภาษาไทย (แบบเต็ม) เพื่อใช้ค้นหาใน monthsList
   const fullThaiMonths = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
@@ -896,11 +847,8 @@ const autoSelectMonths = () => {
 
   const matchedIds = [];
 
-  // 3. วนลูปเดือนที่พบ เพื่อไปหา ID ใน monthsList
   selectedMonthIndices.forEach(monthIdx => {
     const targetMonthName = fullThaiMonths[monthIdx];
-    
-    // ค้นหาใน monthsList ว่ามีชื่อเดือนที่ตรงกันไหม (เช็คทั้งแบบเต็มและแบบย่อ)
     const foundMonth = monthsList.value.find(m => 
       m.name.includes(targetMonthName) || targetMonthName.includes(m.name)
     );
@@ -910,14 +858,106 @@ const autoSelectMonths = () => {
     }
   });
 
-  // 4. อัปเดตค่าลงใน month_ids ของฟอร์ม
   formData.value.month_ids = matchedIds;
 };
 
-// 🟢 สั่งให้ทำงานทุกครั้งที่มีการเปลี่ยนวันที่ในตารางราคา (ใช้ Deep Watch)
-watch(() => formData.value.trip_pricing_data, () => {
+// 🟢 1. ฟังก์ชันคำนวณวันที่กลับอัตโนมัติ (แก้ไขปัญหาเลือกวันที่แล้วไม่ขึ้น)
+const autoCalculateEndDate = (roundIndex) => {
+  const round = formData.value.trip_pricing_data[roundIndex];
+  const days = parseInt(formData.value.trip_days);
+
+  if (!round.start_date) {
+    round.end_date = '';
+    autoSelectMonths();
+    return;
+  }
+
+  // 🟢 แก้ไข: เลิกลบ start_date ทิ้ง เพื่อให้ช่อง input ยังแสดงวันที่ที่เลือก
+  // แต่แสดงแค่แจ้งเตือนให้ไปกรอกจำนวนวันก่อน
+  if (!days || days <= 0) {
+    showDateAlert.value = true;
+    round.end_date = ''; // เคลียร์แค่วันกลับก็พอ
+    autoSelectMonths();
+    
+    setTimeout(() => {
+      showDateAlert.value = false;
+    }, 5000);
+    
+    return;
+  }
+  showDateAlert.value = false;
+
+  // 🟢 แก้ไข: ใช้ split จัดการวันที่ เพื่อป้องกัน Timezone Bug และปัญหาแครชตอนกำลังพิมพ์
+  const parts = round.start_date.split('-');
+  if (parts.length === 3) {
+    const yearStr = parts[0];
+    
+    // ถ้าผู้ใช้กำลังพิมพ์ปี (เช่น 20 หรือ 202) อย่าเพิ่งคำนวณ ป้องกันบราวเซอร์ค้างจากลูปมหาศาล
+    if (yearStr.length < 4) {
+      round.end_date = '';
+      return;
+    }
+
+    const monthStr = parts[1];
+    const dayStr = parts[2];
+
+    const start = new Date(yearStr, monthStr - 1, dayStr); 
+    
+    if (isNaN(start.getTime())) {
+      round.end_date = '';
+      return;
+    }
+
+    // บวกจำนวนวัน (ลบ 1 เพราะนับวันเริ่มต้นเป็นวันที่ 1 ด้วย)
+    start.setDate(start.getDate() + (days - 1));
+    
+    // จัดรูปแบบกลับเป็น YYYY-MM-DD
+    const year = start.getFullYear();
+    const month = String(start.getMonth() + 1).padStart(2, '0');
+    const day = String(start.getDate()).padStart(2, '0');
+    
+    round.end_date = `${year}-${month}-${day}`;
+  } else {
+    round.end_date = '';
+  }
+  
   autoSelectMonths();
-}, { deep: true });
+};
+
+// 🟢 2. Watcher คอยดูการเปลี่ยนแปลงของ "จำนวนวัน (trip_days)" 
+watch(() => formData.value.trip_days, (newDays) => {
+  const targetDays = Number(newDays) || 0;
+  const nights = Number(formData.value.trip_nights) || 0;
+
+  // อัปเดตข้อความสรุป
+  formData.value.trip_days_nights = targetDays > 0 ? `${targetDays} วัน ${nights} คืน` : '';
+  
+  // จัดการเพิ่ม/ลด แถวตารางแผนการเดินทาง
+  const currentRows = itineraryRows.value.length;
+  if (targetDays > currentRows) {
+    for (let i = currentRows; i < targetDays; i++) {
+      itineraryRows.value.push({ day: i + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' });
+    }
+  } else if (targetDays >= 0 && targetDays < currentRows) {
+    itineraryRows.value.splice(targetDays);
+  }
+
+  // อัปเดตวันที่กลับให้ทุกรอบเดินทางที่มีการเลือก "วันที่ไป" ไว้แล้ว
+  if (formData.value.trip_pricing_data?.length > 0) {
+    formData.value.trip_pricing_data.forEach((round, index) => {
+      if (round.start_date) {
+        autoCalculateEndDate(index);
+      }
+    });
+  }
+});
+
+// 🟢 คอยดูจำนวนคืนเพื่ออัปเดตข้อความสรุป
+watch(() => formData.value.trip_nights, (newNights) => {
+  const days = Number(formData.value.trip_days) || 0;
+  const nights = Number(newNights) || 0;
+  formData.value.trip_days_nights = days > 0 ? `${days} วัน ${nights} คืน` : '';
+});
 
 const generateItineraryHtml = () => {
   const getIconHtml = (type) => {
@@ -975,25 +1015,19 @@ const publicApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000
 })
-// ตรวจสอบในไฟล์ src/views/TourList.vue และ TourDetail.vue
+
 const secureApi = axios.create({
-  // 🟢 เปลี่ยนจาก dev1.blupaperdev.com เป็น panda.co.th
   baseURL: 'https://panda.co.th/wp-json/blupaper/v1', 
   timeout: 60000
 })
-// 🟢 1. ฟังก์ชันคัดลอกรอบเดินทาง (ดึงมาแค่ราคา ไม่ดึงวันที่)
-// 🟢 ฟังก์ชันคัดลอกรอบเดินทาง (แบบระบุจำนวนได้)
+
 const duplicatePricingRound = (index) => {
-  // 1. ถามผู้ใช้ว่าต้องการคัดลอกกี่รอบ (ค่าเริ่มต้นคือ 1 รอบ)
   const countStr = window.prompt('ต้องการคัดลอกราคารอบนี้กี่รอบ? (ระบุตัวเลข)', '1');
   
-  // ถ้ากดยกเลิก (Cancel) ให้หยุดการทำงาน
   if (countStr === null) return; 
 
-  // แปลงค่าที่กรอกเป็นตัวเลข
   const count = parseInt(countStr, 10);
   
-  // ดักจับ Error กรณีไม่ได้กรอกตัวเลข หรือกรอกค่าน้อยกว่า 1
   if (isNaN(count) || count <= 0) {
     alert('❌ กรุณากรอกตัวเลขจำนวนรอบที่ถูกต้อง (เช่น 1, 2, 5)');
     return;
@@ -1001,28 +1035,22 @@ const duplicatePricingRound = (index) => {
 
   const sourceRound = formData.value.trip_pricing_data[index];
   
-  // 2. คัดลอกหมวดหมู่และราคาต้นฉบับ
   const copiedPrices = sourceRound.prices.map(price => ({
     category: price.category,
     amount: price.amount
   }));
 
-  // 3. เตรียม Array สำหรับเก็บรอบใหม่ตามจำนวนที่ระบุ
   const newRounds = [];
   for (let i = 0; i < count; i++) {
     newRounds.push({
-      _id: Date.now() + Math.random() + i, // 🟢 สร้าง ID จำลองไม่ให้ซ้ำกัน
-      start_date: sourceRound.start_date,  // ก๊อปปี้วันที่ต้นฉบับมาให้ดูเป็นตัวอย่าง
+      _id: Date.now() + Math.random() + i,
+      start_date: sourceRound.start_date, 
       end_date: sourceRound.end_date,
-      // ต้อง Deep Copy ราคาอีกรอบ เพื่อไม่ให้กล่องใหม่ทุกกล่องเชื่อมโยงข้อมูลกันเอง
       prices: JSON.parse(JSON.stringify(copiedPrices)) 
     });
   }
 
-  // 4. แทรกรอบใหม่ทั้งหมดเข้าไปต่อท้ายกล่องที่กดคัดลอก (ใช้ Spread Operator ...)
   formData.value.trip_pricing_data.splice(index + 1, 0, ...newRounds);
-  
-  // 5. บังคับให้ Vue รีเฟรชหน้าจอใหม่ทั้งหมด
   formData.value.trip_pricing_data = [...formData.value.trip_pricing_data];
 }
 
@@ -1032,18 +1060,15 @@ const sortByDate = () => {
     if (!b.start_date) return -1;
     return new Date(a.start_date) - new Date(b.start_date);
   });
-  // นำค่าที่เรียงเสร็จแล้วยัดกลับไป เพื่อบังคับหน้าจอรีเฟรช
   formData.value.trip_pricing_data = sorted;
 }
 
-// 🟢 4. ฟังก์ชันจัดเรียงตาม "ราคา"
 const sortByPrice = () => {
   const sorted = [...formData.value.trip_pricing_data].sort((a, b) => {
     const priceA = a.prices[0]?.amount ? Number(a.prices[0].amount) : 9999999;
     const priceB = b.prices[0]?.amount ? Number(b.prices[0].amount) : 9999999;
     return priceA - priceB;
   });
-  // นำค่าที่เรียงเสร็จแล้วยัดกลับไป เพื่อบังคับหน้าจอรีเฟรช
   formData.value.trip_pricing_data = sorted;
 }
 
@@ -1053,59 +1078,11 @@ const makeDirectLinkForBackend = (url) => {
     const match = url.match(/\/d\/([^/?#]+)|id=([^&?#]+)/);
     if (match) {
       const fileId = match[1] || match[2];
-      // ส่งเป็น export=download เพื่อให้ API หลังบ้านโหลดเข้า Media Library ได้ง่าย
       return `https://drive.google.com/uc?id=${fileId}&export=download`; 
     }
   }
   return url;
 };
-
-// 1.2 ฟังก์ชันคำนวณวัน-คืน (ป้องกันการบวกสะสม)
-const calculateDaysAndNights = (startDateStr, endDateStr) => {
-  if (!startDateStr || !endDateStr) return { days: 0, nights: 0 };
-  
-  const start = new Date(startDateStr);
-  const end = new Date(endDateStr);
-  
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return { days: 0, nights: 0 };
-  
-  const timeDiff = end.getTime() - start.getTime();
-  const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-  
-  if (diffDays >= 0) {
-    return {
-      days: diffDays + 1,
-      nights: diffDays
-    };
-  }
-  return { days: 0, nights: 0 };
-};
-
-const mainRoundDuration = computed(() => {
-  const firstRound = formData.value.trip_pricing_data?.[0]
-  if (!firstRound) return { days: 0, nights: 0 }
-  return calculateDaysAndNights(firstRound.start_date, firstRound.end_date)
-})
-
-watch(mainRoundDuration, (duration) => {
-  if (duration.days > 0) {
-    formData.value.trip_days_nights = `${duration.days} วัน ${duration.nights} คืน`
-
-    const targetDays = duration.days;
-    const currentRows = itineraryRows.value.length;
-
-    if (targetDays > currentRows) {
-      for (let i = currentRows; i < targetDays; i++) {
-        itineraryRows.value.push({ day: i + 1, detail: '', morning: '-', lunch: '-', dinner: '-', hotel: '' })
-      }
-    } else if (targetDays < currentRows) {
-      itineraryRows.value.splice(targetDays);
-    }
-  } else {
-    formData.value.trip_days_nights = ''
-    itineraryRows.value = []
-  }
-}, { immediate: true })
 
 // ---------------------------------------------------------------------
 // FILE INPUT HANDLERS & FETCH DATA
@@ -1117,7 +1094,7 @@ const onFeaturedImageChange = (event) => {
   const file = event.target.files?.[0] || null
   featuredImageFile.value = file
   if (file) {
-    featuredImagePreview.value = URL.createObjectURL(file) // สร้าง URL พรีวิว
+    featuredImagePreview.value = URL.createObjectURL(file)
   } else {
     featuredImagePreview.value = null
   }
@@ -1152,23 +1129,14 @@ const fetchFestivals = async () => {
   } catch (err) { console.error(err) } finally { loadingFestivals.value = false }
 }
 
-// const fetchMonths = async () => {
-//   loadingMonths.value = true
-//   try {
-//     const res = await publicApi.get('/taxonomy-terms/month')
-//     if (res.data?.success) monthsList.value = res.data.items
-//   } catch (err) { console.error(err) } finally { loadingMonths.value = false }
-// }
-
 const fetchMonths = async () => {
   loadingMonths.value = true
   try {
     const res = await publicApi.get('/taxonomy-terms/month')
     if (res.data?.success) {
-      // 🟢 วนลูปเช็คชื่อเดือน ถ้าเจอ "เมษายน" ให้เพิ่ม disabled: true เข้าไป
       monthsList.value = res.data.items.map(month => {
         if (month.name.includes('เมษายน')) {
-          return { ...month, disabled: true } // บล็อกไม่ให้ User แก้ไขตัวนี้
+          return { ...month, disabled: true }
         }
         return month;
       });
@@ -1181,6 +1149,7 @@ const fetchMonths = async () => {
     loadingMonths.value = false 
   }
 }
+
 const fetchPricingCategories = async () => {
   loadingPricingCategories.value = true
   try {
@@ -1204,6 +1173,34 @@ onMounted(() => {
   fetchFestivals();
   fetchMonths();
   fetchPricingCategories();
+  
+  // 🟢 ตรวจสอบว่ามีข้อมูล Draft เซฟไว้ในเครื่องหรือไม่
+  setTimeout(() => {
+    const draftStr = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (draftStr) {
+      try {
+        const draft = JSON.parse(draftStr);
+        // เช็คว่ามีข้อมูลจริงๆ ที่เคยกรอกไว้ไหม (อย่างน้อยมีพิมพ์ชื่อหรือรหัสทัวร์ไว้)
+        if (draft && draft.formData && (draft.formData.title || draft.formData.trip_code || draft.formData.trip_days)) {
+          const userWantsToRestore = window.confirm('💡 ระบบพบข้อมูลทัวร์ที่คุณกรอกค้างไว้ล่าสุด (อาจเกิดจากเว็บค้างหรือเด้งออก)\n\nคุณต้องการ "กู้คืนข้อมูล" กลับมาหรือไม่?\n\n*หมายเหตุ: ไฟล์รูปภาพและ PDF จะต้องเลือกใหม่อีกครั้ง');
+          
+          if (userWantsToRestore) {
+            // โหลดข้อมูลกลับเข้าฟอร์ม
+            formData.value = draft.formData;
+            if (draft.itineraryRows) {
+              itineraryRows.value = draft.itineraryRows;
+            }
+          } else {
+            // ถ้าไม่เอา ให้ลบทิ้ง
+            localStorage.removeItem(DRAFT_STORAGE_KEY);
+          }
+        }
+      } catch(e) {
+        // หากไฟล์พัง ลบทิ้ง
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    }
+  }, 500); // ดีเลย์เล็กน้อยเพื่อให้หน้าเว็บโหลดเสร็จก่อนค่อยเด้งเตือน
 })
 
 // ---------------------------------------------------------------------
@@ -1216,8 +1213,8 @@ const addPricingRound = () => {
     end_date: '',
     max_pax: '',
     prices: [
-      { category: 'ผู้ใหญ่ (พักเดี่ยว)', amount: '' },
-      { category: 'ผู้ใหญ่ (พักคู่)', amount: '' }
+      { category: 'พักคู่', amount: '' },
+      { category: 'พักเดี่ยว', amount: '' }
     ]
   })
 }
@@ -1231,11 +1228,13 @@ const resetForm = () => {
   pdfFile.value = null
   featuredImageFile.value = null
   galleryFiles.value = []
-  featuredImagePreview.value = null // ล้างรูปปก
-  galleryPreviews.value = []        // ล้างรูปแกลเลอรี
+  featuredImagePreview.value = null
+  galleryPreviews.value = []        
   uploadProgressText.value = ''
+  
+  // 🟢 ล้าง Draft ในเครื่องเมื่อกด ล้างข้อมูล
+  localStorage.removeItem(DRAFT_STORAGE_KEY);
 }
-
 
 const validateFiles = () => {
   if (pdfFile.value && pdfFile.value.type !== 'application/pdf') return 'ไฟล์ PDF ต้องเป็น .pdf เท่านั้น'
@@ -1247,19 +1246,16 @@ const validateFiles = () => {
 const uploadTourAssets = async () => {
   const form = new FormData()
   
-  // 1. แนบไฟล์ PDF (ไม่มีการแปลง)
   if (pdfFile.value) {
     form.append('pdf', pdfFile.value)
   }
   
-  // 2. แปลงรูปปกเป็น WebP ก่อนแนบ
   if (featuredImageFile.value) {
     uploadProgressText.value = 'กำลังแปลงรูปปกเป็น WebP...'
     const webpFeatured = await convertToWebP(featuredImageFile.value, 0.8)
     form.append('featuredImage', webpFeatured)
   }
   
-  // 3. แปลงรูป Gallery เป็น WebP ก่อนแนบ (ถ้ามี)
   if (galleryFiles.value && galleryFiles.value.length > 0) {
     uploadProgressText.value = 'กำลังแปลงรูป Gallery เป็น WebP...'
     for (const file of galleryFiles.value) {
@@ -1281,12 +1277,6 @@ const buildPayload = () => {
   const payload = JSON.parse(JSON.stringify(formData.value))
   payload.tour_schedule_details = generateItineraryHtml()
 
-  // if (!isFormComplete.value) {
-  //   payload.status = 'draft'
-  // } else {
-  //   payload.status = formData.value.status || 'publish'
-  // }
-  // 🟢 บังคับสถานะก่อนบันทึก: ครบ = publish, ไม่ครบ = draft แบบเด็ดขาด
   payload.status = isFormComplete.value ? 'publish' : 'draft';
 
   if (payload.excerpt) {
@@ -1306,13 +1296,16 @@ const buildPayload = () => {
       prices: (round.prices || []).map(price => ({ category: String(price.category || '').trim(), amount: Number(price.amount) || 0 })).filter(price => price.category !== '' && price.amount > 0)
     })).filter(round => round.prices.length > 0)
 
-  // 🟢 จุดสำคัญ: บังคับให้ Payload ใช้จำนวนวันตามที่แอดมินกรอกในฟอร์มเท่านั้น
   payload.trip_days = Number(formData.value.trip_days) || 0;
   payload.trip_nights = Number(formData.value.trip_nights) || 0;
   payload.trip_days_nights = payload.trip_days ? `${payload.trip_days} วัน ${payload.trip_nights} คืน` : '';
+
+  payload.trip_price = lowestPrice.value; 
+  payload.trip_start_date = earliestDate.value; 
   
   return payload
 }
+
 const submitTourData = async () => {
   successMessage.value = ''; errorMessage.value = ''; uploadProgressText.value = ''
   if (!formData.value.title.trim() || !formData.value.trip_code.trim()) return errorMessage.value = 'กรุณากรอกชื่อทัวร์และรหัสทัวร์'
@@ -1335,6 +1328,10 @@ const submitTourData = async () => {
 
     if (response.data?.success) {
       successMessage.value = `บันทึกทัวร์สำเร็จ! (Post ID: ${response.data.post_id})`
+      
+      // 🟢 ล้างข้อมูล Draft เมื่อบันทึกเข้าเซิร์ฟเวอร์เสร็จสมบูรณ์
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      
       resetForm(); await fetchAirlines()
     } else errorMessage.value = response.data?.message || 'ไม่สามารถบันทึกข้อมูลได้'
   } catch (error) { errorMessage.value = error.response?.data?.message || error.message || 'เชื่อมต่อ Server ล้มเหลว' }
@@ -1344,17 +1341,13 @@ const submitTourData = async () => {
 // ---------------------------------------------------------------------
 // AUTO CALCULATE LOWEST PRICE
 // ---------------------------------------------------------------------
-// 🟢 1. สร้าง Computed หาค่าราคาที่น้อยที่สุดจากทุกรอบ
 const lowestPrice = computed(() => {
   let min = Infinity;
   let hasPrice = false;
 
-  // วนลูปดูทุกรอบเดินทาง
   formData.value.trip_pricing_data.forEach(round => {
-    // วนลูปดูทุกหมวดหมู่ราคาในรอบนั้นๆ
     round.prices.forEach(price => {
       const amount = Number(price.amount);
-      // ถ้าราคามีค่ามากกว่า 0 และน้อยกว่าค่า min ปัจจุบัน ให้จำค่านี้ไว้
       if (amount > 0 && amount < min) {
         min = amount;
         hasPrice = true;
@@ -1365,36 +1358,28 @@ const lowestPrice = computed(() => {
   return hasPrice ? min : 0;
 });
 
-// 🟢 2. สั่ง Watch คอยดูว่าถ้า lowestPrice เปลี่ยน ให้เอาไปอัปเดตในฟอร์มทันที
 watch(lowestPrice, (newMin) => {
   if (newMin > 0) {
-    // นำตัวเลขไปแปลงใส่ลูกน้ำ (เช่น 89900 -> "89,900")
     formData.value.trip_price_display = newMin.toLocaleString('th-TH');
   } else {
-    // ถ้ายังไม่ได้กรอกราคาเลย ให้ล้างค่าทิ้ง
     formData.value.trip_price_display = '';
   }
-}, { immediate: true }); // immediate: true เพื่อให้คำนวณทันทีที่โหลดหน้าจอ
-
+}, { immediate: true }); 
 
 const thaiShortMonths = [
   'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
   'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
 ];
 
-// 🟢 2. สร้าง Computed เพื่อดึงเดือนแรกและเดือนสุดท้าย
 const computedTripSchedule = computed(() => {
-  // ดึงวันที่ทั้งหมดจากทุกรอบเดินทาง
   const validDates = formData.value.trip_pricing_data
     .map(round => round.start_date)
-    .filter(date => date) // กรองเอาเฉพาะที่กรอกวันที่แล้ว
-    .map(date => new Date(date).getTime()) // แปลงเป็นตัวเลข Timestamp
-    .filter(time => !isNaN(time)); // ป้องกันค่า Error
+    .filter(date => date) 
+    .map(date => new Date(date).getTime()) 
+    .filter(time => !isNaN(time)); 
 
-  // ถ้ายังไม่ได้เลือกวันที่เลย ให้คืนค่าว่าง
   if (validDates.length === 0) return '';
 
-  // หาวันที่น้อยที่สุด (เดือนแรกสุด) และ วันที่มากที่สุด (เดือนท้ายสุด)
   const minDate = new Date(Math.min(...validDates));
   const maxDate = new Date(Math.max(...validDates));
 
@@ -1404,20 +1389,16 @@ const computedTripSchedule = computed(() => {
   const minYear = minDate.getFullYear();
   const maxYear = maxDate.getFullYear();
 
-  // ถ้าเดินทางอยู่ในเดือนและปีเดียวกัน ให้แสดงแค่เดือนเดียว (เช่น "มี.ค.")
   if (minMonth === maxMonth && minYear === maxYear) {
     return minMonth;
   } else {
-    // ถ้าข้ามเดือน ให้แสดงแบบช่วง (เช่น "ม.ค. - มี.ค.")
     return `${minMonth} - ${maxMonth}`;
   }
 });
 
-// 🟢 3. สั่ง Watch ให้คอยอัปเดตลงฟอร์มทันทีที่ข้อมูลเปลี่ยน
 watch(computedTripSchedule, (newSchedule) => {
   formData.value.trip_schedule = newSchedule;
 }, { immediate: true });
-
 
 // ---------------------------------------------------------------------
 // 🟢 ฟังก์ชันแปลงข้อความอาหารเป็น Icon สำหรับหน้าพรีวิว
@@ -1432,7 +1413,6 @@ const getMealIconHtml = (type) => {
   if (type.includes('บิน') || type === 'plane') {
     return '<span title="บิน" style="font-size: 1.25rem;">✈️</span>';
   }
-  // ถ้าเป็นข้อความอื่นๆ ให้แสดงเป็นตัวหนังสือปกติ
   return `<span style="font-size: 0.85rem; color: #475569;">${type}</span>`;
 };
 
@@ -1440,13 +1420,10 @@ const getMealIconHtml = (type) => {
 // PRICE FORMATTING (COMMA)
 // ---------------------------------------------------------------------
 const onPriceInput = (event, roundIndex, priceIndex) => {
-  // 1. ดึงค่าที่แอดมินพิมพ์มา ตัดตัวอักษรอื่นๆ และลูกน้ำออกให้เหลือแค่ "ตัวเลข"
   let rawValue = event.target.value.replace(/\D/g, '');
 
-  // 2. บันทึกค่าตัวเลขล้วนๆ กลับเข้าไปใน Model (เพื่อส่ง API และคำนวณ)
   formData.value.trip_pricing_data[roundIndex].prices[priceIndex].amount = rawValue ? Number(rawValue) : '';
 
-  // 3. บังคับให้ช่อง Input แสดงผลเป็นแบบมีลูกน้ำทันทีที่พิมพ์
   if (rawValue) {
     event.target.value = Number(rawValue).toLocaleString('th-TH');
   } else {
@@ -1457,9 +1434,8 @@ const onPriceInput = (event, roundIndex, priceIndex) => {
 // ---------------------------------------------------------------------
 // 🟢 แปลงรูปภาพเป็น WebP (คุณภาพสูงสุด 100% ขนาดใหญ่สุด)
 // ---------------------------------------------------------------------
-const convertToWebP = (file, quality = 1.0) => { // 🟢 ปรับเป็น 1.0 ตรงนี้
+const convertToWebP = (file, quality = 1.0) => { 
   return new Promise((resolve, reject) => {
-    // ถ้าไม่ใช่ไฟล์รูป หรือเป็น WebP/GIF อยู่แล้ว ให้คืนค่าไฟล์เดิมกลับไปเลย
     if (!file.type.startsWith('image/') || file.type === 'image/webp' || file.type === 'image/gif') {
       resolve(file)
       return
@@ -1471,17 +1447,14 @@ const convertToWebP = (file, quality = 1.0) => { // 🟢 ปรับเป็�
       const img = new Image()
       img.src = event.target.result
       img.onload = () => {
-        // สร้าง Canvas จำลองขึ้นมาเพื่อวาดรูป (ขนาดเท่าต้นฉบับ 100%)
         const canvas = document.createElement('canvas')
         canvas.width = img.width
         canvas.height = img.height
         const ctx = canvas.getContext('2d')
         ctx.drawImage(img, 0, 0)
         
-        // แปลง Canvas เป็นไฟล์ WebP
         canvas.toBlob((blob) => {
           if (blob) {
-            // เปลี่ยนนามสกุลไฟล์เดิมเป็น .webp
             const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp"
             const webpFile = new File([blob], newFileName, { type: 'image/webp' })
             resolve(webpFile)
@@ -1496,8 +1469,6 @@ const convertToWebP = (file, quality = 1.0) => { // 🟢 ปรับเป็�
   })
 }
 
-
-
 const csvFileInput = ref(null);
 const isImporting = ref(false);
 
@@ -1506,8 +1477,8 @@ const importSummaryText = ref('');
 const closeImportProgressModal = () => {
   isImporting.value = false;
   isImportComplete.value = false;
-  successMessage.value = importSummaryText.value; // โชว์แจ้งเตือนสีเขียวมุมขวา
-  setTimeout(() => successMessage.value = '', 4000); // ซ่อนอัตโนมัติใน 4 วิ
+  successMessage.value = importSummaryText.value; 
+  setTimeout(() => successMessage.value = '', 4000); 
 };
 
 const importProgress = ref('');
@@ -1523,37 +1494,31 @@ const closeImportSuccessModal = () => {
   showImportSuccessModal.value = false;
 };
 
-// คำนวณเพื่อดึงทัวร์ตัวปัจจุบันมาโชว์บนหน้าจอ
 const currentPreviewTour = computed(() => {
   if (parsedTours.value.length === 0) return null;
   return parsedTours.value[currentPreviewIndex.value];
 });
 
-// ฟังก์ชันเลื่อนดูทัวร์ "ก่อนหน้า"
 const prevPreview = () => {
   if (currentPreviewIndex.value > 0) currentPreviewIndex.value--;
 };
 
-// ฟังก์ชันเลื่อนดูทัวร์ "ถัดไป"
 const nextPreview = () => {
   if (currentPreviewIndex.value < parsedTours.value.length - 1) currentPreviewIndex.value++;
 };
 
-// ฟังก์ชันกดยกเลิกการนำเข้า
 const cancelImport = () => {
   showPreviewModal.value = false;
   parsedTours.value = [];
   currentPreviewIndex.value = 0;
-  if (csvFileInput.value) csvFileInput.value.value = ''; // รีเซ็ตช่องเลือกไฟล์
+  if (csvFileInput.value) csvFileInput.value.value = ''; 
 };
 
-// ฟังก์ชันกดยืนยัน (ส่งข้อมูลทั้งหมดไป API)
 const confirmImport = () => {
-  showPreviewModal.value = false; // ปิดหน้าต่างพรีวิว
-  processImportTours(parsedTours.value); // เริ่มกระบวนการ Import ของจริง!
+  showPreviewModal.value = false; 
+  processImportTours(parsedTours.value); 
 };
 
-// ฟังก์ชันแปลงวันที่ (กรณี Excel ใส่มาเป็น 1/1/2025 ให้เป็น 2025-01-01)
 const convertDate = (dateStr) => {
   if (!dateStr) return '';
   const parts = dateStr.split('/');
@@ -1570,24 +1535,23 @@ const getDirectDriveLink = (url) => {
       const fileId = match[1] || match[2];
       const driveDirectLink = `https://drive.google.com/uc?id=${fileId}&export=view`;
       
-      // ดึงผ่านตัวกลางชั่วคราว เพื่อให้โชว์ใน Modal พรีวิวของแอดมินได้โดยไม่ติด Error
       return `https://wsrv.nl/?url=${encodeURIComponent(driveDirectLink)}`;
     }
   }
   return url;
 };
+
 // ---------------------------------------------------------------------
 // 🟢 ฟังก์ชันแปลงข้อความเป็นย่อหน้า (Paragraph) สำหรับ Overview (ใหม่!)
 // ---------------------------------------------------------------------
 const formatAsParagraph = (text) => {
   if (!text) return '';
-  if (/<[a-z][\s\S]*>/i.test(text)) return text; // ถ้ามี HTML อยู่แล้วให้ข้าม
+  if (/<[a-z][\s\S]*>/i.test(text)) return text; 
   
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   if (lines.length === 0) return '';
 
   let html = '';
-  // หุ้มแต่ละบรรทัดด้วยแท็ก <p> เพื่อให้ QuillEditor แสดงผลได้อย่างถูกต้อง
   lines.forEach(line => { html += `<p>${line}</p>`; });
   return html;
 };
@@ -1602,7 +1566,6 @@ const formatAsBulletedList = (text) => {
   const lines = text.split('\n').map(line => line.replace(/^[-*•\s]+/, '').trim()).filter(line => line.length > 0);
   if (lines.length === 0) return '';
   
-  // ลบ \n ออกจาก <ul> เพื่อไม่ให้ QuillEditor มีปัญหา
   let html = '<ul>';
   lines.forEach(line => { html += `<li>${line}</li>`; });
   html += '</ul>';
@@ -1610,7 +1573,6 @@ const formatAsBulletedList = (text) => {
   return html;
 };
 
-// ฟังก์ชันจำลองการสร้างตาราง HTML จาก Array (ใช้ตอน Import)
 const generateHtmlForImport = (rows) => {
   if (!rows || rows.length === 0) return '';
   let html = '<table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">';
@@ -1650,7 +1612,6 @@ const handleCsvImport = (event) => {
       for (let i = 2; i < rows.length; i++) {
         const row = rows[i];
         
-        // 🆔 รหัสทัวร์อยู่ที่คอลัมน์ B (Index 1)
         const tripCode = row[1] ? row[1].trim() : '';
 
         if (tripCode !== '') {
@@ -1661,21 +1622,21 @@ const handleCsvImport = (event) => {
           }
 
          currentTour = {
-            trip_code: tripCode,        // Index 1 (คอลัมน์ B)
-            destinations_text: row[2] || '', // Index 2 (คอลัมน์ C)
-            months_text: row[3] || '',    // Index 3 (คอลัมน์ D)
-            festivals_text: row[4] || '',  // Index 4 (คอลัมน์ E)
-            tour_pdf_url: row[5] || '',   // Index 5 (คอลัมน์ F)
-            featured_image_url: row[6] || '', // Index 6 (คอลัมน์ G) 👈 รูปปกอยู่ตรงนี้
-            title: row[7] || '',          // Index 7 (คอลัมน์ H)
-            excerpt: row[8] || '',        // Index 8 (คอลัมน์ I) 👈 Excerpt อยู่ตรงนี้
+            trip_code: tripCode,        
+            destinations_text: row[2] || '', 
+            months_text: row[3] || '',    
+            festivals_text: row[4] || '',  
+            tour_pdf_url: row[5] || '',   
+            featured_image_url: row[6] || '', 
+            title: row[7] || '',          
+            excerpt: row[8] || '',        
             overview: formatAsParagraph(row[9] || ''),
-            tour_highlight: formatAsBulletedList(row[10] || ''), // Index 10 (คอลัมน์ K)
+            tour_highlight: formatAsBulletedList(row[10] || ''), 
             
-            tour_hotel_rating: row[17] || '5', // Index 17 (คอลัมน์ R)
-            tour_airlines: row[18] || '',      // Index 18 (คอลัมน์ S)
-            trip_days: Number(row[20]) || 0,   // Index 20 (คอลัมน์ U)
-            trip_nights: Number(row[21]) || 0, // Index 21 (คอลัมน์ V)
+            tour_hotel_rating: row[17] || '5', 
+            tour_airlines: row[18] || '',      
+            trip_days: Number(row[20]) || 0,   
+            trip_nights: Number(row[21]) || 0, 
             status: 'draft',
             destination_ids: [], festival_ids: [], month_ids: []
           };
@@ -1685,14 +1646,12 @@ const handleCsvImport = (event) => {
 
         if (!currentTour) continue;
 
-        // ดึงแผนการเดินทาง (เริ่ม Index 11)
         if (row[11] && row[11].trim() !== '') {
           itineraryRows.push({
             day: row[11], detail: row[12], morning: row[13], lunch: row[14], dinner: row[15], hotel: row[16]
           });
         }
 
-        // ดึงราคา (เริ่ม Index 22)
         if (row[22] && row[22].trim() !== '') {
           const roundsPrices = [];
           if (Number(row[25]) > 0) roundsPrices.push({ category: 'ผู้ใหญ่ (พักคู่)', amount: Number(row[25]) });
@@ -1723,33 +1682,6 @@ const handleCsvImport = (event) => {
   });
 };
 
-
-// 🟢 ตรวจสอบว่ากรอกข้อมูลครบทุกช่องที่สำคัญหรือไม่
-// const isFormComplete = computed(() => {
-//   const fd = formData.value;
-  
-//   // 1. ข้อมูลทั่วไป
-//   const hasGeneral = fd.title && fd.trip_code && fd.trip_days && fd.trip_nights;
-  
-//   // 2. ข้อมูลการเดินทาง (เช็กว่าเลือกจุดหมายอย่างน้อย 1 ที่)
-//   const hasTravel = fd.tour_airlines && fd.destination_ids?.length > 0;
-  
-//   // 3. รอบเดินทาง (ต้องมีอย่างน้อย 1 รอบ และในรอบนั้นต้องมีราคา)
-//   const hasPricing = fd.trip_pricing_data?.length > 0 && 
-//                      fd.trip_pricing_data.every(round => 
-//                         round.start_date && round.prices?.some(p => p.amount > 0)
-//                      );
-  
-//   // 4. รายละเอียดเนื้อหา
-//   const hasContent = fd.excerpt && fd.overview && fd.tour_highlight && itineraryRows.value.length > 0;
-  
-//   // 5. ไฟล์แนบ (ถ้าหน้าเพิ่มต้องมีไฟล์ใหม่ ถ้าหน้าแก้ไขมีของเดิมหรือของใหม่ก็ได้)
-//   const hasImage = featuredImageFile.value || (typeof currentFeaturedImageUrl !== 'undefined' && currentFeaturedImageUrl.value);
-//   const hasPdf = pdfFile.value || (typeof currentPdfUrl !== 'undefined' && currentPdfUrl.value);
-
-//   return hasGeneral && hasTravel && hasPricing && hasContent && hasImage && hasPdf;
-// });
-// 🟢 โค้ดเดิมที่มีอยู่แล้ว (เอาไว้ดูเป็นจุดอ้างอิง)
 const isFormComplete = computed(() => {
   const fd = formData.value;
   const hasGeneral = fd.title && fd.trip_code && fd.trip_days && fd.trip_nights;
@@ -1765,19 +1697,13 @@ const isFormComplete = computed(() => {
   return hasGeneral && hasTravel && hasPricing && hasContent && hasImage && hasPdf;
 });
 
-// --------------------------------------------------
-// 🟢 ส่วนที่ต้อง ก๊อปปี้ไปวางเพิ่ม ตรงนี้ครับ 👇
-// --------------------------------------------------
 watch(isFormComplete, (isComplete) => {
   if (isComplete) {
-    formData.value.status = 'publish'; // ถ้าข้อมูลบังคับครบแล้ว ให้ปรับช่องเป็น เผยแพร่
+    formData.value.status = 'publish'; 
   } else {
-    formData.value.status = 'draft';   // ถ้ายังไม่ครบ ให้ปรับช่องเป็น ซ่อนไว้ก่อน
+    formData.value.status = 'draft';   
   }
 }, { immediate: true });
-// --------------------------------------------------
-
-
 
 // ---------------------------------------------------------------------
 // 🟢 1. ฟังก์ชันตัวช่วยสำหรับกระบวนการ Import (วางไว้ก่อน processImportTours)
@@ -1794,7 +1720,6 @@ const mapTextToIds = (textStr, optionsList) => {
     .map(opt => opt.id || opt.value);
 };
 
-// 1.4 หา "ช่วงเดือนเดินทางรวม" (Schedule) โดยดูจาก Start และ End Date ของทุกรอบ
 const calculateTripScheduleForImport = (pricingData) => {
   if (!pricingData || pricingData.length === 0) return '';
   
@@ -1843,7 +1768,6 @@ const parseItineraryFromHtml = (htmlString) => {
       const checkIcon = (td) => {
         if (!td) return '-'
         const html = String(td.innerHTML || td.textContent || '').toLowerCase()
-        // 🟢 เพิ่มการดักจับ Emoji และคำภาษาไทย
         if (html.includes('food') || html.includes('🍽️') || html.includes('อาหาร')) return 'food'
         if (html.includes('plane') || html.includes('✈️') || html.includes('บิน')) return 'plane'
         return '-'
@@ -1857,17 +1781,29 @@ const parseItineraryFromHtml = (htmlString) => {
     })
   }
 }
-// ฟังก์ชันจัดการนำเข้าทัวร์หลายรายการจาก CSV (TourList.vue)
-// ฟังก์ชันจัดการนำเข้าทัวร์หลายรายการจาก CSV (TourList.vue)
+
+
+// ฟังก์ชันสำหรับหาวันที่เริ่มต้นที่เร็วที่สุด
+const earliestDate = computed(() => {
+  if (!formData.value.trip_pricing_data || formData.value.trip_pricing_data.length === 0) return '';
+  
+  // ดึงวันที่เริ่มทั้งหมด กรองค่าว่าง และเรียงลำดับ
+  const dates = formData.value.trip_pricing_data
+    .map(round => round.start_date)
+    .filter(d => d)
+    .sort();
+    
+  return dates.length > 0 ? dates[0] : '';
+});
+
 const processImportTours = async (tours) => {
   isImporting.value = true;
-  importPercentage.value = 0; // 🟢 เซ็ตค่าเริ่มต้นเป็น 0%
+  importPercentage.value = 0; 
   let successCount = 0;
 
   for (let i = 0; i < tours.length; i++) {
     const t = tours[i];
     
-    // 🟢 อัปเดตข้อความให้แอดมินเห็นว่ากำลังทำรายการไหน
     importProgress.value = `กำลังนำเข้าข้อมูล: ${t.trip_code} (${i + 1}/${tours.length})`;
     importPercentage.value = Math.round((i / tours.length) * 100);
 
@@ -1932,20 +1868,17 @@ const processImportTours = async (tours) => {
       console.error(`ล้มเหลวในการนำเข้า ${t.trip_code}:`, error);
     }
     
-    // 🟢 อัปเดตเปอร์เซ็นต์เมื่อจบรอบบันทึกแต่ละอัน
     importPercentage.value = Math.round(((i + 1) / tours.length) * 100);
   }
 
  setTimeout(() => {
     importSummaryText.value = `นำเข้าสำเร็จ ${successCount} จาก ${tours.length} รายการ`;
     isImportComplete.value = true;
-    
-    // (เอาโค้ด isImporting.value = false และ alert() ของเดิมออกไปเลยครับ)
-    
   }, 500);
 };
 
 </script>
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
